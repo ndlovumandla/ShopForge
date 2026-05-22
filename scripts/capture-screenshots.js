@@ -63,6 +63,10 @@ async function capture(page, route, fileName) {
     await capture(page, "/dashboard", "admin-dashboard.png");
     await capture(page, "/products", "admin-products.png");
     await capture(page, "/products/new", "admin-product-form.png");
+    await capture(page, "/reports/sales", "admin-report-sales.png");
+    await capture(page, "/reports/revenue", "admin-report-revenue.png");
+    await capture(page, "/reports/top-products", "admin-report-top-products.png");
+    await capture(page, "/reports/inventory", "admin-report-inventory.png");
 
     const mobileContext = await browser.newContext({
       viewport: { width: 390, height: 844 },
@@ -73,6 +77,7 @@ async function capture(page, route, fileName) {
     await signIn(mobileContext);
     const mobilePage = await mobileContext.newPage();
     await capture(mobilePage, "/dashboard", "admin-dashboard-mobile.png");
+    await capture(mobilePage, "/reports/sales", "admin-report-sales-mobile.png");
   } finally {
     await browser.close();
   }

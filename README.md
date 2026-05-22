@@ -47,12 +47,44 @@ The screenshots below are generated from the running Blazor admin portal and sho
 | --- | --- |
 | ![ShopForge add product form](docs/screenshots/admin-product-form.png) | ![ShopForge mobile admin dashboard](docs/screenshots/admin-dashboard-mobile.png) |
 
-To refresh these images locally:
+| Sales Analytics | Revenue Mix |
+| --- | --- |
+| ![ShopForge sales report](docs/screenshots/admin-report-sales.png) | ![ShopForge revenue report](docs/screenshots/admin-report-revenue.png) |
+
+| Top Products | Inventory Report |
+| --- | --- |
+| ![ShopForge top products report](docs/screenshots/admin-report-top-products.png) | ![ShopForge inventory report](docs/screenshots/admin-report-inventory.png) |
+
+| Mobile Sales Report |
+| --- |
+| ![ShopForge mobile sales report](docs/screenshots/admin-report-sales-mobile.png) |
+
+| Customer Sign In | Customer Register |
+| --- | --- |
+| ![ShopForge customer sign in](docs/screenshots/customer-mobile-home.png) | ![ShopForge customer registration](docs/screenshots/customer-mobile-register.png) |
+
+| Customer Home | Customer Shop |
+| --- | --- |
+| ![ShopForge customer home](docs/screenshots/customer-mobile-authenticated.png) | ![ShopForge customer shop](docs/screenshots/customer-mobile-shop.png) |
+
+| Customer Cart | Checkout Address |
+| --- | --- |
+| ![ShopForge customer cart](docs/screenshots/customer-mobile-cart.png) | ![ShopForge checkout address](docs/screenshots/customer-mobile-checkout.png) |
+
+| Checkout Payment |
+| --- |
+| ![ShopForge checkout payment](docs/screenshots/customer-mobile-payment.png) |
+
+The admin reporting filters default to `1 January 2021` through today so the dashboard loads the full available demo history immediately.
+
+To refresh the browser-based admin images locally:
 
 ```bash
 npm install --no-save playwright
 node scripts/capture-screenshots.js
 ```
+
+Customer images are captured from the Windows .NET MAUI app after running `dotnet run --project src/ShopForge.Mobile`.
 
 ## Core Features
 
@@ -135,6 +167,26 @@ The Blazor admin portal is designed around fast ecommerce operations:
 - Reporting pages with executive summaries and chart-ready datasets.
 - Responsive shell with sidebar navigation, touch-friendly controls, and mobile layout support.
 
+## Customer Journey
+
+The customer side is implemented in the .NET MAUI mobile app. The full buying workflow is represented by dedicated screens and view models:
+
+| Step | Screen | What it demonstrates |
+| --- | --- | --- |
+| 1 | Register | Customer account creation and form validation |
+| 2 | Login | Authenticated customer session flow |
+| 3 | Home | Featured products and storefront entry point |
+| 4 | Shop and Search | Product browsing, category filtering, and search |
+| 5 | Product Detail | Product information, pricing, reviews, and cart actions |
+| 6 | Cart | Quantity updates, totals, coupon-ready calculations |
+| 7 | Checkout Address | Shipping destination selection |
+| 8 | Checkout Shipping | Delivery method selection |
+| 9 | Checkout Payment | Mock card payment flow with Luhn validation |
+| 10 | Checkout Confirmation | Order review and placement |
+| 11 | Orders | Post-purchase order history and detail tracking |
+
+This end-to-end flow shows the platform from both sides of the business: customers can register, browse, buy, and track orders, while admins can manage catalog, inventory, orders, promotions, reporting, and store settings.
+
 ## API Capabilities
 
 Key endpoint groups include:
@@ -207,8 +259,8 @@ Docker Compose starts SQL Server and the API with seed data.
 | --- | --- | --- |
 | Admin | `admin@shopforge.co.za` | `Admin@123` |
 | Manager | `manager@shopforge.co.za` | `Manager@123` |
-| Customer | `john.doe@example.com` | `Customer@123` |
-| Customer | `jane.smith@example.com` | `Customer@123` |
+| Customer | `customer003@example.com` | `Customer@123` |
+| Customer | `customer004@example.com` | `Customer@123` |
 
 ## Demo Payment Cards
 

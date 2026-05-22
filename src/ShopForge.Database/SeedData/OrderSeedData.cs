@@ -5,6 +5,9 @@ namespace ShopForge.Database.SeedData;
 
 public static class OrderSeedData
 {
+    private static readonly DateTime ReportingWindowStart = new(2021, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+    private static readonly DateTime ReportingWindowEnd = new(2026, 5, 22, 0, 0, 0, DateTimeKind.Utc);
+
     // Matches product data in ProductSeedData — index = ProductId - 1
     private static readonly (string Name, string Sku, decimal Price)[] ProductRef =
     {
@@ -137,7 +140,7 @@ public static class OrderSeedData
         for (int i = 1; i <= 200; i++)
         {
             var date = GetOrderDate(i);
-            int month = ((i - 1) % 12) + 1;
+            int month = date.Month;
             string status = i <= 120 ? "Delivered" : (i <= 160 ? "Shipped" : (i <= 180 ? "Processing" : (i <= 190 ? "Cancelled" : "Refunded")));
             int userId    = ((i - 1) % 5) + 3;
             int addressId = ((i - 1) % 5) + 1;
@@ -147,7 +150,7 @@ public static class OrderSeedData
             orders.Add(new Order
             {
                 Id                = i,
-                OrderNumber       = $"ORD-2024{month:D2}-{i:D5}",
+                OrderNumber       = $"ORD-{date:yyyyMM}-{i:D5}",
                 UserId            = userId,
                 Status            = status,
                 ShippingAddressId = addressId,
@@ -244,9 +247,11 @@ public static class OrderSeedData
 
     private static DateTime GetOrderDate(int orderId)
     {
-        int month = ((orderId - 1) % 12) + 1;
-        int day   = Math.Min(28, ((orderId - 1) / 12) + 1);
-        return new DateTime(2024, month, day, 0, 0, 0, DateTimeKind.Utc);
+        const int orderCount = 200;
+        var totalDays = (ReportingWindowEnd - ReportingWindowStart).Days;
+        var offsetDays = (int)Math.Round((orderId - 1) * (totalDays / (double)(orderCount - 1)));
+
+        return ReportingWindowStart.AddDays(offsetDays);
     }
 
     private static (decimal SubTotal, decimal ShippingCost, decimal TaxAmount, decimal TotalAmount) ComputeAmounts(int orderId)

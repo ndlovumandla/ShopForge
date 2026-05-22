@@ -106,7 +106,8 @@ else
 }
 
 @code {
-    private DateTime? _from = DateTime.Today.AddDays(-30);
+    private static readonly DateTime ReportingStartDate = new(2021, 1, 1);
+    private DateTime? _from = ReportingStartDate;
     private DateTime? _to = DateTime.Today;
     private List<RevenueDataPoint> _data = new();
     private double[] _chartValues = Array.Empty<double>();
@@ -127,7 +128,7 @@ else
     private async Task Load()
     {
         _loading = true;
-        var result = await ApiService.GetRevenueByCategoryAsync(_from ?? DateTime.Today.AddDays(-30), _to ?? DateTime.Today);
+        var result = await ApiService.GetRevenueByCategoryAsync(_from ?? ReportingStartDate, _to ?? DateTime.Today);
         _data = (result?.Data ?? new()).OrderByDescending(x => x.Revenue).ToList();
         _chartLabels = _data.Take(8).Select(x => x.Category).ToArray();
         _chartValues = _data.Take(8).Select(x => (double)x.Revenue).ToArray();

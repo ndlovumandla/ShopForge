@@ -125,9 +125,10 @@ else
 }
 
 @code {
-    private DateTime? _from = DateTime.Today.AddDays(-30);
+    private static readonly DateTime ReportingStartDate = new(2021, 1, 1);
+    private DateTime? _from = ReportingStartDate;
     private DateTime? _to = DateTime.Today;
-    private string _groupBy = "day";
+    private string _groupBy = "month";
     private List<SalesDataPointDto> _data = new();
     private List<ChartSeries> _series = new();
     private string[] _labels = Array.Empty<string>();
@@ -149,7 +150,7 @@ else
     private async Task Load()
     {
         _loading = true;
-        var result = await ApiService.GetSalesReportAsync(_from ?? DateTime.Today.AddDays(-30), _to ?? DateTime.Today, _groupBy);
+        var result = await ApiService.GetSalesReportAsync(_from ?? ReportingStartDate, _to ?? DateTime.Today, _groupBy);
         _data = (result?.Data ?? new()).OrderBy(x => x.Date).ToList();
         _labels = _data.Select(x => x.Date.ToString(_groupBy == "month" ? "MMM yyyy" : "dd MMM")).ToArray();
         _series = new()
