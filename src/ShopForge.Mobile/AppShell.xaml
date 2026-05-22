@@ -1,0 +1,29 @@
+﻿<?xml version="1.0" encoding="UTF-8" ?>
+<Shell xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+       xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+       xmlns:home="clr-namespace:ShopForge.Mobile.Views.Home"
+       xmlns:shop="clr-namespace:ShopForge.Mobile.Views.Shop"
+       xmlns:cart="clr-namespace:ShopForge.Mobile.Views.Cart"
+       xmlns:orders="clr-namespace:ShopForge.Mobile.Views.Orders"
+       xmlns:wishlist="clr-namespace:ShopForge.Mobile.Views.Wishlist"
+       xmlns:account="clr-namespace:ShopForge.Mobile.Views.Account"
+       x:Class="ShopForge.Mobile.AppShell"
+       Shell.NavBarHasShadow="True">
+
+    <Shell.Resources>
+        <Style TargetType="TabBar">
+            <Setter Property="Shell.TabBarBackgroundColor" Value="{StaticResource Primary}" />
+            <Setter Property="Shell.TabBarForegroundColor" Value="White" />
+            <Setter Property="Shell.TabBarTitleColor" Value="White" />
+            <Setter Property="Shell.TabBarUnselectedColor" Value="#AAAAAA" />
+        </Style>
+    </Shell.Resources>
+
+    <TabBar x:Name="ShellTabs">
+        <ShellContent Title="Home" Icon="home.png" ContentTemplate="{DataTemplate home:HomePage}" Route="home" />
+        <ShellContent Title="Shop" Icon="shop.png" ContentTemplate="{DataTemplate shop:ShopPage}" Route="shop" />
+        <ShellContent Title="Cart" Icon="cart.png" ContentTemplate="{DataTemplate cart:CartPage}" Route="cart" />
+        <ShellContent Title="Orders" Icon="orders.png" ContentTemplate="{DataTemplate orders:OrdersPage}" Route="orders" />
+        <ShellContent Title="Account" Icon="account.png" ContentTemplate="{DataTemplate account:AccountPage}" Route="account" />
+    </TabBar>
+</Shell>

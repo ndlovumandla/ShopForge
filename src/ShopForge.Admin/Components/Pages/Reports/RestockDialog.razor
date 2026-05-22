@@ -1,0 +1,34 @@
+<MudDialog>
+    <DialogContent>
+        <MudText Typo="Typo.body1" Class="mb-3">
+            Add stock for <b>@ProductName</b> (@SKU)
+        </MudText>
+        <MudNumericField @bind-Value="_quantity" Label="Quantity to add" Min="1" Variant="Variant.Outlined" T="int" />
+    </DialogContent>
+    <DialogActions>
+        <MudButton Variant="Variant.Text" OnClick="Cancel">Cancel</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="Submit">Apply</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter]
+    private IMudDialogInstance MudDialog { get; set; } = default!;
+
+    [Parameter] public string ProductName { get; set; } = string.Empty;
+    [Parameter] public string SKU { get; set; } = string.Empty;
+
+    private int _quantity = 1;
+
+    private void Cancel() => MudDialog.Cancel();
+
+    private void Submit()
+    {
+        if (_quantity <= 0)
+        {
+            return;
+        }
+
+        MudDialog.Close(DialogResult.Ok(_quantity));
+    }
+}

@@ -1,0 +1,13 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/ShopForge.Admin/ShopForge.Admin.csproj" />
+    <Project Path="src/ShopForge.Api/ShopForge.Api.csproj" />
+    <Project Path="src/ShopForge.Database/ShopForge.Database.csproj" />
+    <Project Path="src/ShopForge.Mobile/ShopForge.Mobile.csproj" />
+    <Project Path="src/ShopForge.Shared/ShopForge.Shared.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/ShopForge.Api.Tests/ShopForge.Api.Tests.csproj" />
+    <Project Path="tests/ShopForge.Mobile.Tests/ShopForge.Mobile.Tests.csproj" />
+  </Folder>
+</Solution>

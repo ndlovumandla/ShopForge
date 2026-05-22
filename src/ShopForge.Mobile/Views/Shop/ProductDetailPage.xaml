@@ -1,0 +1,93 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="ShopForge.Mobile.Views.Shop.ProductDetailPage"
+             Title="{Binding Title}">
+    <ScrollView>
+        <VerticalStackLayout Spacing="0">
+            <ActivityIndicator IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}"
+                               Color="{StaticResource Primary}" HorizontalOptions="Center" Margin="40" />
+            <VerticalStackLayout IsVisible="{Binding IsBusy, Converter={StaticResource InvertedBoolConverter}}">
+                <!-- Images -->
+                <CarouselView ItemsSource="{Binding Product.Images}" HeightRequest="300">
+                    <CarouselView.ItemTemplate>
+                        <DataTemplate>
+                            <Image Source="{Binding ImageUrl}" Aspect="AspectFill" BackgroundColor="{StaticResource Gray200}" />
+                        </DataTemplate>
+                    </CarouselView.ItemTemplate>
+                </CarouselView>
+
+                <VerticalStackLayout Padding="16" Spacing="12">
+                    <!-- Name + Price -->
+                    <Label Text="{Binding Product.Name}" FontSize="22" FontAttributes="Bold" TextColor="{StaticResource Gray900}" />
+                    <HorizontalStackLayout Spacing="12">
+                        <Label Text="{Binding Product.Price, StringFormat='R{0:N2}'}" Style="{StaticResource PriceLabel}" FontSize="22" />
+                        <Label Text="{Binding Product.CompareAtPrice, StringFormat='R{0:N2}'}"
+                               TextDecorations="Strikethrough" TextColor="{StaticResource Gray400}" FontSize="16"
+                               IsVisible="{Binding Product.CompareAtPrice, Converter={StaticResource NullToVisibilityConverter}}" />
+                    </HorizontalStackLayout>
+
+                    <!-- Rating -->
+                    <HorizontalStackLayout Spacing="8">
+                        <Label Text="{Binding Product.AverageRating, StringFormat='&#x2605; {0:F1}'}" TextColor="{StaticResource Warning}" FontSize="16" />
+                        <Label Text="{Binding Product.ReviewCount, StringFormat='({0} reviews)'}" TextColor="{StaticResource Gray600}" FontSize="14" />
+                    </HorizontalStackLayout>
+
+                    <!-- Stock -->
+                    <Label Text="{Binding Product.StockQuantity, StringFormat='{0} in stock'}" TextColor="{StaticResource Gray600}" FontSize="13" />
+
+                    <!-- Quantity Selector -->
+                    <HorizontalStackLayout Spacing="12" Margin="0,8">
+                        <Button Text="-" Command="{Binding DecreaseQuantityCommand}"
+                                BackgroundColor="{StaticResource Gray200}" TextColor="{StaticResource Gray900}"
+                                CornerRadius="8" WidthRequest="44" HeightRequest="44" />
+                        <Label Text="{Binding Quantity}" FontSize="18" FontAttributes="Bold"
+                               VerticalOptions="Center" MinimumWidthRequest="40" HorizontalTextAlignment="Center" />
+                        <Button Text="+" Command="{Binding IncreaseQuantityCommand}"
+                                BackgroundColor="{StaticResource Gray200}" TextColor="{StaticResource Gray900}"
+                                CornerRadius="8" WidthRequest="44" HeightRequest="44" />
+                    </HorizontalStackLayout>
+
+                    <!-- Actions -->
+                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                        <Button Grid.Column="0" Text="Add to Cart" Command="{Binding AddToCartCommand}"
+                                Style="{StaticResource PrimaryButton}" />
+                        <Button Grid.Column="1" Text="&#x2661;" Command="{Binding AddToWishlistCommand}"
+                                BackgroundColor="{StaticResource Gray200}" TextColor="{StaticResource Gray900}"
+                                CornerRadius="8" WidthRequest="48" HeightRequest="48" />
+                    </Grid>
+
+                    <!-- Description -->
+                    <BoxView HeightRequest="1" BackgroundColor="{StaticResource Gray200}" Margin="0,8" />
+                    <Label Text="Description" Style="{StaticResource HeadingLabel}" FontSize="16" />
+                    <Label Text="{Binding Product.Description}" TextColor="{StaticResource Gray600}" FontSize="14"
+                           MaxLines="4" LineBreakMode="TailTruncation"
+                           IsVisible="{Binding DescriptionExpanded, Converter={StaticResource InvertedBoolConverter}}" />
+                    <Label Text="{Binding Product.Description}" TextColor="{StaticResource Gray600}" FontSize="14"
+                           IsVisible="{Binding DescriptionExpanded}" />
+                    <Button Text="Read more" Command="{Binding ToggleDescriptionCommand}"
+                            BackgroundColor="Transparent" TextColor="{StaticResource Primary}" HorizontalOptions="Start" />
+
+                    <!-- Reviews -->
+                    <BoxView HeightRequest="1" BackgroundColor="{StaticResource Gray200}" Margin="0,8" />
+                    <Label Text="Reviews" Style="{StaticResource HeadingLabel}" FontSize="16" />
+                    <CollectionView ItemsSource="{Binding Reviews}">
+                        <CollectionView.ItemTemplate>
+                            <DataTemplate>
+                                <VerticalStackLayout Padding="0,8" Spacing="4">
+                                    <HorizontalStackLayout Spacing="8">
+                                        <Label Text="{Binding UserName}" FontAttributes="Bold" FontSize="14" />
+                                        <Label Text="{Binding Rating, StringFormat='&#x2605; {0}'}" TextColor="{StaticResource Warning}" FontSize="13" />
+                                    </HorizontalStackLayout>
+                                    <Label Text="{Binding Title}" FontAttributes="Bold" FontSize="13" />
+                                    <Label Text="{Binding Body}" TextColor="{StaticResource Gray600}" FontSize="13" />
+                                    <BoxView HeightRequest="1" BackgroundColor="{StaticResource Gray200}" />
+                                </VerticalStackLayout>
+                            </DataTemplate>
+                        </CollectionView.ItemTemplate>
+                    </CollectionView>
+                </VerticalStackLayout>
+            </VerticalStackLayout>
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

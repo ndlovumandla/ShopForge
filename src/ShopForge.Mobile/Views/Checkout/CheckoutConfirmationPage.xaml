@@ -1,0 +1,24 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="ShopForge.Mobile.Views.Checkout.CheckoutConfirmationPage"
+             Title="Order Confirmed"
+             NavigationPage.HasBackButton="False">
+    <VerticalStackLayout Padding="32" Spacing="16" VerticalOptions="Center">
+        <Label Text="&#x1F389;" FontSize="64" HorizontalOptions="Center" />
+        <Label Text="Order Confirmed!" FontSize="28" FontAttributes="Bold"
+               TextColor="{StaticResource Primary}" HorizontalOptions="Center" />
+        <Label Text="{Binding Order.OrderNumber, StringFormat='Order #{0}'}"
+               FontSize="18" TextColor="{StaticResource Gray600}" HorizontalOptions="Center" />
+        <Label Text="{Binding TransactionId, StringFormat='Transaction: {0}'}"
+               FontSize="14" TextColor="{StaticResource Gray600}" HorizontalOptions="Center"
+               IsVisible="{Binding TransactionId, Converter={StaticResource NullToVisibilityConverter}}" />
+        <Label Text="{Binding Order.TotalAmount, StringFormat='Total: R{0:N2}'}"
+               FontSize="20" FontAttributes="Bold" TextColor="{StaticResource Gray900}" HorizontalOptions="Center" />
+        <Button Text="Track Order" Command="{Binding TrackOrderCommand}"
+                Style="{StaticResource PrimaryButton}" Margin="0,16,0,0" />
+        <Button Text="Continue Shopping" Command="{Binding ContinueShoppingCommand}"
+                BackgroundColor="{StaticResource Gray200}" TextColor="{StaticResource Gray900}"
+                CornerRadius="8" Padding="16,12" />
+    </VerticalStackLayout>
+</ContentPage>

@@ -1,0 +1,110 @@
+@inherits LayoutComponentBase
+@inject IAdminAuthService AuthService
+@inject IAdminApiService ApiService
+@inject NavigationManager Nav
+@inject IJSRuntime JS
+
+<MudThemeProvider Theme="_theme" />
+<MudPopoverProvider />
+<MudDialogProvider />
+<MudSnackbarProvider />
+
+@if (!AuthService.IsAuthenticated)
+{
+    @Body
+}
+else
+{
+    <MudLayout Class="sf-shell">
+        <MudAppBar Elevation="0" Class="sf-topbar">
+            <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="ToggleDrawer" Class="sf-icon-button" />
+            <div class="sf-brand-mark">SF</div>
+            <div>
+                <MudText Typo="Typo.subtitle1" Class="sf-brand-title">ShopForge</MudText>
+                <MudText Typo="Typo.caption" Class="sf-brand-subtitle">Commerce operations</MudText>
+            </div>
+            <MudSpacer />
+            <MudChip T="string" Size="Size.Small" Class="sf-live-chip" Icon="@Icons.Material.Filled.Bolt">Live</MudChip>
+            <div class="sf-user-pill">
+                <MudAvatar Size="Size.Small" Class="sf-user-avatar">@GetInitials()</MudAvatar>
+                <div class="sf-user-copy">
+                    <span>@AuthService.UserName</span>
+                    <small>@AuthService.Role</small>
+                </div>
+            </div>
+            <MudIconButton Icon="@Icons.Material.Filled.ManageAccounts" Color="Color.Inherit" OnClick="GoToProfile" Class="sf-icon-button" />
+            <MudIconButton Icon="@Icons.Material.Filled.Logout" Color="Color.Inherit" OnClick="Logout" Class="sf-icon-button" />
+        </MudAppBar>
+        <MudDrawer @bind-Open="_drawerOpen" Elevation="0" Variant="DrawerVariant.Responsive" ClipMode="DrawerClipMode.Always" Class="sf-sidebar">
+            <MudDrawerHeader Class="sf-sidebar-header">
+                <MudText Typo="Typo.overline">Workspace</MudText>
+                <MudText Typo="Typo.h6">Command Center</MudText>
+            </MudDrawerHeader>
+            <NavMenu />
+        </MudDrawer>
+        <MudMainContent Class="sf-main">
+            <MudContainer MaxWidth="MaxWidth.False" Class="sf-page-container">
+                @Body
+            </MudContainer>
+        </MudMainContent>
+    </MudLayout>
+}
+
+@code {
+    private bool _drawerOpen = true;
+
+    private MudTheme _theme = new MudTheme()
+    {
+        PaletteLight = new PaletteLight
+        {
+            Primary = "#1976D2",
+            Secondary = "#12B981",
+            Tertiary = "#F59E0B",
+            AppbarBackground = "#0F172A",
+            Background = "#F6F8FB",
+            Surface = "#FFFFFF",
+            DrawerBackground = "#FFFFFF",
+            TextPrimary = "#111827",
+            TextSecondary = "#64748B",
+            LinesDefault = "#E5E7EB"
+        }
+    };
+
+    protected override void OnInitialized()
+    {
+        var hasRole = string.Equals(AuthService.Role, "Admin", StringComparison.OrdinalIgnoreCase) ||
+                      string.Equals(AuthService.Role, "Manager", StringComparison.OrdinalIgnoreCase);
+
+        if ((!AuthService.IsAuthenticated || !hasRole) && !Nav.Uri.Contains("/login"))
+        {
+            Nav.NavigateTo("/login");
+        }
+    }
+
+    private void ToggleDrawer() => _drawerOpen = !_drawerOpen;
+
+    private void GoToProfile() => Nav.NavigateTo("/profile");
+
+    private string GetInitials()
+    {
+        var parts = (AuthService.UserName ?? "Admin User").Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        return string.Concat(parts.Take(2).Select(p => p[0])).ToUpperInvariant();
+    }
+
+    private async Task Logout()
+    {
+        if (!string.IsNullOrWhiteSpace(AuthService.Token))
+        {
+            ApiService.SetToken(AuthService.Token);
+        }
+
+        if (!string.IsNullOrWhiteSpace(AuthService.RefreshToken))
+        {
+            await ApiService.LogoutAsync(AuthService.RefreshToken);
+        }
+
+        await JS.InvokeVoidAsync("shopForgeAuth.clearSession");
+        AuthService.ClearAuth();
+        Nav.NavigateTo("/login", forceLoad: true);
+    }
+}

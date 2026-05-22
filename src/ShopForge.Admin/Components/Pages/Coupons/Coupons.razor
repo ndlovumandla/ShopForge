@@ -1,0 +1,99 @@
+@page "/coupons"
+@rendermode InteractiveServer
+@inject IAdminApiService ApiService
+@inject IAdminAuthService AuthService
+@inject IDialogService DialogService
+@inject ISnackbar Snackbar
+
+<PageTitle>Coupons</PageTitle>
+<MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-4">
+    <MudText Typo="Typo.h4">Coupons</MudText>
+    <MudSpacer />
+    <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="OpenCreateDialog">Add Coupon</MudButton>
+</MudStack>
+
+<MudCard Elevation="2">
+    <MudCardContent>
+        <MudTable Items="_coupons" Dense="true" Hover="true" Loading="_loading">
+            <HeaderContent>
+                <MudTh>Code</MudTh>
+                <MudTh>Type</MudTh>
+                <MudTh>Value</MudTh>
+                <MudTh>Used</MudTh>
+                <MudTh>Expires</MudTh>
+                <MudTh>Status</MudTh>
+                <MudTh>Actions</MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd><MudText Typo="Typo.body1" Style="font-family:monospace">@context.Code</MudText></MudTd>
+                <MudTd>@context.DiscountType</MudTd>
+                <MudTd>@(context.DiscountType == "Percentage" ? $"{context.DiscountValue}%" : $"R{context.DiscountValue}")</MudTd>
+                <MudTd>@context.UsageCount / @(context.UsageLimit?.ToString() ?? "∞")</MudTd>
+                <MudTd>@(context.ExpiresAt?.ToString("dd MMM yyyy") ?? "Never")</MudTd>
+                <MudTd>
+                    <MudChip T="string" Size="Size.Small" Color="@(context.IsActive ? Color.Success : Color.Default)">
+                        @(context.IsActive ? "Active" : "Inactive")
+                    </MudChip>
+                </MudTd>
+                <MudTd>
+                    <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" OnClick="() => OpenEditDialog(context)" />
+                    <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error" OnClick="() => DeleteCoupon(context.Id)" />
+                </MudTd>
+            </RowTemplate>
+            <NoRecordsContent>
+                <MudText>No coupons found.</MudText>
+            </NoRecordsContent>
+        </MudTable>
+    </MudCardContent>
+</MudCard>
+
+@code {
+    private List<CouponDto> _coupons = new();
+    private bool _loading = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (AuthService.Token != null) ApiService.SetToken(AuthService.Token);
+        await LoadCoupons();
+    }
+
+    private async Task LoadCoupons()
+    {
+        _loading = true;
+        var result = await ApiService.GetCouponsAsync();
+        _coupons = result?.Data ?? new();
+        _loading = false;
+    }
+
+    private async Task OpenCreateDialog()
+    {
+        var dialog = await DialogService.ShowAsync<CouponDialog>("Create Coupon");
+        var result = await dialog.Result;
+        if (result is { Canceled: false } && result.Data is CreateCouponRequest req)
+        {
+            var r = await ApiService.CreateCouponAsync(req);
+            if (r?.Success == true) { Snackbar.Add("Coupon created", Severity.Success); await LoadCoupons(); }
+            else Snackbar.Add(r?.Message ?? "Failed", Severity.Error);
+        }
+    }
+
+    private async Task OpenEditDialog(CouponDto coupon)
+    {
+        var parameters = new DialogParameters<CouponDialog> { { x => x.Coupon, coupon } };
+        var dialog = await DialogService.ShowAsync<CouponDialog>("Edit Coupon", parameters);
+        var result = await dialog.Result;
+        if (result is { Canceled: false } && result.Data is CreateCouponRequest req)
+        {
+            var r = await ApiService.UpdateCouponAsync(coupon.Id, req);
+            if (r?.Success == true) { Snackbar.Add("Coupon updated", Severity.Success); await LoadCoupons(); }
+            else Snackbar.Add(r?.Message ?? "Failed", Severity.Error);
+        }
+    }
+
+    private async Task DeleteCoupon(int id)
+    {
+        var result = await ApiService.DeleteCouponAsync(id);
+        if (result?.Success == true) { Snackbar.Add("Coupon deleted", Severity.Success); await LoadCoupons(); }
+        else Snackbar.Add("Delete failed", Severity.Error);
+    }
+}

@@ -1,0 +1,43 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="ShopForge.Mobile.Views.Checkout.CheckoutAddressPage"
+             Title="Select Address">
+    <Grid RowDefinitions="*,Auto">
+        <CollectionView Grid.Row="0" ItemsSource="{Binding Addresses}" SelectionMode="Single"
+                        SelectedItem="{Binding SelectedAddress}">
+            <CollectionView.ItemTemplate>
+                <DataTemplate>
+                    <Frame Margin="16,8" Padding="16" CornerRadius="8" HasShadow="True" BackgroundColor="White">
+                        <VerticalStackLayout Spacing="4">
+                            <HorizontalStackLayout Spacing="8">
+                                <Label Text="{Binding Label}" FontAttributes="Bold" FontSize="14" />
+                                <Label Text="(Default)" TextColor="{StaticResource Success}" FontSize="12"
+                                       IsVisible="{Binding IsDefault}" />
+                            </HorizontalStackLayout>
+                            <Label Text="{Binding FullName}" FontSize="14" />
+                            <Label Text="{Binding Line1}" TextColor="{StaticResource Gray600}" FontSize="13" />
+                            <Label TextColor="{StaticResource Gray600}" FontSize="13">
+                                <Label.Text>
+                                    <MultiBinding StringFormat="{}{0}, {1}, {2}">
+                                        <Binding Path="City" />
+                                        <Binding Path="State" />
+                                        <Binding Path="PostalCode" />
+                                    </MultiBinding>
+                                </Label.Text>
+                            </Label>
+                        </VerticalStackLayout>
+                    </Frame>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+        <VerticalStackLayout Grid.Row="1" Padding="16" Spacing="8">
+            <Label Text="{Binding ErrorMessage}" TextColor="{StaticResource Error}"
+                   IsVisible="{Binding ErrorMessage, Converter={StaticResource NullToVisibilityConverter}}" />
+            <Button Text="Add New Address" Command="{Binding AddNewAddressCommand}"
+                    BackgroundColor="{StaticResource Gray200}" TextColor="{StaticResource Gray900}" CornerRadius="8" />
+            <Button Text="Continue to Shipping" Command="{Binding ContinueCommand}"
+                    Style="{StaticResource PrimaryButton}" />
+        </VerticalStackLayout>
+    </Grid>
+</ContentPage>

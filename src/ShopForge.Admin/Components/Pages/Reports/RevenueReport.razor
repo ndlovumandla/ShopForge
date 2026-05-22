@@ -1,0 +1,136 @@
+@page "/reports/revenue"
+@rendermode InteractiveServer
+@inject IAdminApiService ApiService
+@inject IAdminAuthService AuthService
+
+<PageTitle>Revenue by Category</PageTitle>
+
+<section class="sf-page-hero">
+    <div>
+        <div class="sf-page-eyebrow">Category performance</div>
+        <div class="sf-page-title">Revenue mix</div>
+        <div class="sf-page-subtitle">
+            Understand which categories drive sales, share of wallet, and fulfillment volume.
+        </div>
+    </div>
+</section>
+
+<div class="sf-filter-bar">
+    <MudDatePicker @bind-Date="_from" Label="From" Variant="Variant.Outlined" />
+    <MudDatePicker @bind-Date="_to" Label="To" Variant="Variant.Outlined" />
+    <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.PieChart" OnClick="Load">Analyze</MudButton>
+</div>
+
+@if (_loading)
+{
+    <MudSkeleton Height="120px" Class="mb-4" />
+    <MudSkeleton Height="360px" />
+}
+else
+{
+    <div class="sf-kpi-grid">
+        <div class="sf-kpi-card">
+            <div class="sf-kpi-label">Category revenue</div>
+            <div class="sf-kpi-value">R @TotalRevenue.ToString("N0")</div>
+            <div class="sf-kpi-meta">Selected period</div>
+        </div>
+        <div class="sf-kpi-card">
+            <div class="sf-kpi-label">Items sold</div>
+            <div class="sf-kpi-value">@TotalItems</div>
+            <div class="sf-kpi-meta">Across categories</div>
+        </div>
+        <div class="sf-kpi-card">
+            <div class="sf-kpi-label">Top category</div>
+            <div class="sf-kpi-value">@TopCategoryName</div>
+            <div class="sf-kpi-meta">@TopCategoryShare.ToString("N1")% contribution</div>
+        </div>
+        <div class="sf-kpi-card">
+            <div class="sf-kpi-label">Active categories</div>
+            <div class="sf-kpi-value">@_data.Count</div>
+            <div class="sf-kpi-meta">With revenue</div>
+        </div>
+    </div>
+
+    <MudGrid Class="mt-4">
+        <MudItem xs="12" lg="5">
+            <div class="sf-panel">
+                <div class="sf-panel-header">
+                    <div>
+                        <div class="sf-panel-title">Category share</div>
+                        <div class="sf-panel-caption">Relative revenue contribution.</div>
+                    </div>
+                </div>
+                @if (_chartValues.Any())
+                {
+                    <MudChart ChartType="ChartType.Donut" InputData="@_chartValues" InputLabels="@_chartLabels" Width="100%" Height="340px" />
+                }
+                else
+                {
+                    <div class="sf-empty-state">No revenue data exists for this range.</div>
+                }
+            </div>
+        </MudItem>
+        <MudItem xs="12" lg="7">
+            <div class="sf-panel">
+                <div class="sf-panel-header">
+                    <div>
+                        <div class="sf-panel-title">Revenue by category</div>
+                        <div class="sf-panel-caption">Sorted by revenue impact.</div>
+                    </div>
+                </div>
+                <MudTable Items="_data" Dense="true" Hover="true" Breakpoint="Breakpoint.Sm">
+                    <HeaderContent>
+                        <MudTh>Category</MudTh>
+                        <MudTh>Revenue</MudTh>
+                        <MudTh>Orders</MudTh>
+                        <MudTh>Items Sold</MudTh>
+                        <MudTh>Share</MudTh>
+                    </HeaderContent>
+                    <RowTemplate>
+                        <MudTd DataLabel="Category">@context.Category</MudTd>
+                        <MudTd DataLabel="Revenue">R @context.Revenue.ToString("N2")</MudTd>
+                        <MudTd DataLabel="Orders">@context.OrderCount</MudTd>
+                        <MudTd DataLabel="Items Sold">@context.ItemsSold</MudTd>
+                        <MudTd DataLabel="Share">
+                            <MudProgressLinear Value="@context.Percentage" Color="Color.Primary" Class="mb-1" />
+                            @context.Percentage.ToString("N1")%
+                        </MudTd>
+                    </RowTemplate>
+                    <NoRecordsContent>
+                        <div class="sf-empty-state">No records for this range.</div>
+                    </NoRecordsContent>
+                </MudTable>
+            </div>
+        </MudItem>
+    </MudGrid>
+}
+
+@code {
+    private DateTime? _from = DateTime.Today.AddDays(-30);
+    private DateTime? _to = DateTime.Today;
+    private List<RevenueDataPoint> _data = new();
+    private double[] _chartValues = Array.Empty<double>();
+    private string[] _chartLabels = Array.Empty<string>();
+    private bool _loading;
+
+    private decimal TotalRevenue => _data.Sum(x => x.Revenue);
+    private int TotalItems => _data.Sum(x => x.ItemsSold);
+    private string TopCategoryName => _data.Count == 0 ? "No data" : _data[0].Category;
+    private double TopCategoryShare => _data.Count == 0 ? 0 : _data[0].Percentage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (AuthService.Token != null) ApiService.SetToken(AuthService.Token);
+        await Load();
+    }
+
+    private async Task Load()
+    {
+        _loading = true;
+        var result = await ApiService.GetRevenueByCategoryAsync(_from ?? DateTime.Today.AddDays(-30), _to ?? DateTime.Today);
+        _data = (result?.Data ?? new()).OrderByDescending(x => x.Revenue).ToList();
+        _chartLabels = _data.Take(8).Select(x => x.Category).ToArray();
+        _chartValues = _data.Take(8).Select(x => (double)x.Revenue).ToArray();
+        _loading = false;
+    }
+}

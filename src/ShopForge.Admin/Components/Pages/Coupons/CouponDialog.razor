@@ -1,0 +1,51 @@
+<MudDialog>
+    <DialogContent>
+    <MudForm @ref="_form">
+        <MudTextField @bind-Value="_request.Code" Label="Code" Required="true" Variant="Variant.Outlined" Class="mb-3" />
+        <MudTextField @bind-Value="_request.Description" Label="Description" Variant="Variant.Outlined" Class="mb-3" />
+        <MudSelect @bind-Value="_request.DiscountType" Label="Discount Type" Required="true" Variant="Variant.Outlined" Class="mb-3" T="string">
+            <MudSelectItem Value="@("Percentage")">Percentage</MudSelectItem>
+            <MudSelectItem Value="@("Fixed")">Fixed Amount</MudSelectItem>
+        </MudSelect>
+        <MudNumericField @bind-Value="_request.DiscountValue" Label="Discount Value" Required="true" Variant="Variant.Outlined" Class="mb-3" T="decimal" />
+        <MudNumericField @bind-Value="_request.MinimumOrderAmount" Label="Minimum Order Amount" Variant="Variant.Outlined" Class="mb-3" T="decimal?" />
+        <MudNumericField @bind-Value="_request.UsageLimit" Label="Usage Limit" Variant="Variant.Outlined" Class="mb-3" T="int?" />
+        <MudDatePicker @bind-Date="_request.ExpiresAt" Label="Expires At" Class="mb-3" />
+        <MudSwitch @bind-Value="_request.IsActive" Label="Active" Color="Color.Primary" />
+    </MudForm>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="Submit">Save</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter]
+    private IMudDialogInstance MudDialog { get; set; } = default!;
+
+    [Parameter] public CouponDto? Coupon { get; set; }
+    private MudForm? _form;
+    private CreateCouponRequest _request = new() { IsActive = true, DiscountType = "Percentage" };
+
+    protected override void OnInitialized()
+    {
+        if (Coupon != null)
+        {
+            _request = new CreateCouponRequest
+            {
+                Code = Coupon.Code, Description = Coupon.Description, DiscountType = Coupon.DiscountType,
+                DiscountValue = Coupon.DiscountValue, MinimumOrderAmount = Coupon.MinimumOrderAmount,
+                MaximumDiscountAmount = Coupon.MaximumDiscountAmount, UsageLimit = Coupon.UsageLimit,
+                StartsAt = Coupon.StartsAt, ExpiresAt = Coupon.ExpiresAt, IsActive = Coupon.IsActive
+            };
+        }
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+    private async Task Submit()
+    {
+        await _form!.Validate();
+        if (_form.IsValid) MudDialog.Close(DialogResult.Ok(_request));
+    }
+}

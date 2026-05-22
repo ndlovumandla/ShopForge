@@ -1,0 +1,22 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="ShopForge.Mobile.Views.Controls.ProductCard">
+    <Frame BackgroundColor="White" CornerRadius="12" Padding="0" HasShadow="True" Margin="4">
+        <VerticalStackLayout>
+            <Image Source="{Binding PrimaryImageUrl}" Aspect="AspectFill" HeightRequest="160"
+                   BackgroundColor="{StaticResource Gray200}" />
+            <VerticalStackLayout Padding="10" Spacing="4">
+                <Label Text="{Binding Name}" MaxLines="2" LineBreakMode="TailTruncation"
+                       FontAttributes="Bold" FontSize="13" />
+                <Label Text="{Binding CategoryName}" TextColor="{StaticResource Gray600}" FontSize="11" />
+                <HorizontalStackLayout Spacing="8">
+                    <Label Text="{Binding Price, StringFormat='R{0:N2}'}" Style="{StaticResource PriceLabel}" FontSize="15" />
+                    <Label Text="{Binding CompareAtPrice, StringFormat='R{0:N2}'}"
+                           TextDecorations="Strikethrough" TextColor="{StaticResource Gray400}" FontSize="12"
+                           IsVisible="{Binding CompareAtPrice, Converter={StaticResource NullToVisibilityConverter}}" />
+                </HorizontalStackLayout>
+            </VerticalStackLayout>
+        </VerticalStackLayout>
+    </Frame>
+</ContentView>

@@ -1,0 +1,255 @@
+@page "/dashboard"
+@rendermode InteractiveServer
+@inject IAdminApiService ApiService
+@inject IAdminAuthService AuthService
+@inject NavigationManager Nav
+
+<PageTitle>Dashboard</PageTitle>
+
+<section class="sf-page-hero">
+    <div>
+        <div class="sf-page-eyebrow">Executive command center</div>
+        <div class="sf-page-title">Today at a glance</div>
+        <div class="sf-page-subtitle">
+            Revenue, order velocity, customer growth, and operational alerts in one responsive workspace.
+        </div>
+    </div>
+    <div class="sf-action-row">
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick='() => Nav.NavigateTo("/products/new")'>Add Product</MudButton>
+        <MudButton Variant="Variant.Outlined" Color="Color.Primary" StartIcon="@Icons.Material.Filled.ReceiptLong" OnClick='() => Nav.NavigateTo("/orders")'>Review Orders</MudButton>
+        <MudButton Variant="Variant.Text" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Inventory" OnClick='() => Nav.NavigateTo("/reports/inventory")'>Inventory</MudButton>
+    </div>
+</section>
+
+@if (_loading)
+{
+    <MudSkeleton Height="120px" Class="mb-4" />
+    <MudSkeleton Height="360px" />
+}
+else if (_error != null)
+{
+    <MudAlert Severity="Severity.Error" Class="mb-4">
+        Unable to reach the API: @_error. Make sure the API is running on http://localhost:5000.
+    </MudAlert>
+}
+else if (_summary != null)
+{
+    <div class="sf-kpi-grid">
+        <div class="sf-kpi-card">
+            <div class="sf-kpi-label">Today's revenue</div>
+            <div class="sf-kpi-value">R @_summary.TodayRevenue.ToString("N0")</div>
+            <div class="sf-kpi-meta">
+                <span class="@GetTrendClass(RevenueDelta)">@(RevenueDelta >= 0 ? "+" : "")@RevenueDelta.ToString("N1")%</span>
+                <span>vs yesterday</span>
+            </div>
+        </div>
+        <div class="sf-kpi-card">
+            <div class="sf-kpi-label">Today's orders</div>
+            <div class="sf-kpi-value">@_summary.TodayOrders</div>
+            <div class="sf-kpi-meta">
+                <span class="@GetTrendClass(OrderDelta)">@(OrderDelta >= 0 ? "+" : "")@OrderDelta.ToString("N1")%</span>
+                <span>order velocity</span>
+            </div>
+        </div>
+        <div class="sf-kpi-card">
+            <div class="sf-kpi-label">Pending orders</div>
+            <div class="sf-kpi-value">@_summary.PendingOrders</div>
+            <div class="sf-kpi-meta">
+                <MudIcon Icon="@Icons.Material.Filled.Schedule" Size="Size.Small" />
+                <span>need fulfillment attention</span>
+            </div>
+        </div>
+        <div class="sf-kpi-card">
+            <div class="sf-kpi-label">New customers</div>
+            <div class="sf-kpi-value">@_summary.NewCustomersThisWeek</div>
+            <div class="sf-kpi-meta">
+                <MudIcon Icon="@Icons.Material.Filled.TrendingUp" Size="Size.Small" />
+                <span>last 7 days</span>
+            </div>
+        </div>
+    </div>
+
+    <MudGrid Class="mt-4">
+        <MudItem xs="12" lg="8">
+            <div class="sf-panel">
+                <div class="sf-panel-header">
+                    <div>
+                        <div class="sf-panel-title">Revenue momentum</div>
+                        <div class="sf-panel-caption">Daily revenue and order count over the last 30 days.</div>
+                    </div>
+                    <MudChip T="string" Size="Size.Small" Color="Color.Primary">30 days</MudChip>
+                </div>
+                @if (_salesSeries.Any() && _salesLabels.Any())
+                {
+                    <MudChart ChartType="ChartType.Line" ChartSeries="@_salesSeries" XAxisLabels="@_salesLabels" Width="100%" Height="320px" />
+                }
+                else
+                {
+                    <div class="sf-empty-state">No sales data available for the selected period yet.</div>
+                }
+            </div>
+        </MudItem>
+        <MudItem xs="12" lg="4">
+            <div class="sf-panel">
+                <div class="sf-panel-header">
+                    <div>
+                        <div class="sf-panel-title">Revenue mix</div>
+                        <div class="sf-panel-caption">Category contribution for recent sales.</div>
+                    </div>
+                </div>
+                @if (_categorySeries.Any() && _categoryLabels.Any())
+                {
+                    <MudChart ChartType="ChartType.Donut" InputData="@_categorySeries" InputLabels="@_categoryLabels" Width="100%" Height="320px" />
+                }
+                else
+                {
+                    <div class="sf-empty-state">No category revenue data yet.</div>
+                }
+            </div>
+        </MudItem>
+    </MudGrid>
+
+    <MudGrid Class="mt-4">
+        <MudItem xs="12" lg="8">
+            <div class="sf-panel">
+                <div class="sf-panel-header">
+                    <div>
+                        <div class="sf-panel-title">Recent orders</div>
+                        <div class="sf-panel-caption">Latest customer activity and fulfillment state.</div>
+                    </div>
+                    <MudButton Variant="Variant.Text" Color="Color.Primary" OnClick='() => Nav.NavigateTo("/orders")'>View All</MudButton>
+                </div>
+                <MudTable Items="_summary.RecentOrders" Dense="true" Hover="true" Breakpoint="Breakpoint.Sm">
+                    <HeaderContent>
+                        <MudTh>Order</MudTh>
+                        <MudTh>Customer</MudTh>
+                        <MudTh>Amount</MudTh>
+                        <MudTh>Status</MudTh>
+                        <MudTh>Date</MudTh>
+                        <MudTh></MudTh>
+                    </HeaderContent>
+                    <RowTemplate>
+                        <MudTd DataLabel="Order">@context.OrderNumber</MudTd>
+                        <MudTd DataLabel="Customer">@context.CustomerName</MudTd>
+                        <MudTd DataLabel="Amount">R @context.TotalAmount.ToString("N2")</MudTd>
+                        <MudTd DataLabel="Status"><MudChip T="string" Size="Size.Small" Color="@GetOrderColor(context.Status)">@context.Status</MudChip></MudTd>
+                        <MudTd DataLabel="Date">@context.CreatedAt.ToString("dd MMM yyyy")</MudTd>
+                        <MudTd>
+                            <MudIconButton Icon="@Icons.Material.Filled.Visibility" Size="Size.Small" OnClick="@(() => Nav.NavigateTo($"/orders/{context.Id}"))" />
+                        </MudTd>
+                    </RowTemplate>
+                    <NoRecordsContent>
+                        <div class="sf-empty-state">No recent orders yet.</div>
+                    </NoRecordsContent>
+                </MudTable>
+            </div>
+        </MudItem>
+        <MudItem xs="12" lg="4">
+            <div class="sf-panel">
+                <div class="sf-panel-header">
+                    <div>
+                        <div class="sf-panel-title">Inventory watchlist</div>
+                        <div class="sf-panel-caption">@_summary.LowStockProducts products need attention.</div>
+                    </div>
+                    <MudButton Variant="Variant.Text" Color="Color.Primary" OnClick='() => Nav.NavigateTo("/reports/inventory")'>Open</MudButton>
+                </div>
+                @if (_summary.LowStockAlerts.Any())
+                {
+                    @foreach (var item in _summary.LowStockAlerts)
+                    {
+                        <MudPaper Class="pa-3 mb-2 d-flex justify-space-between align-center" Outlined="true">
+                            <div>
+                                <MudText Typo="Typo.body2"><b>@item.ProductName</b></MudText>
+                                <MudText Typo="Typo.caption">@item.SKU · @item.StockQuantity left · threshold @item.LowStockThreshold</MudText>
+                            </div>
+                            <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" OnClick="@(() => Nav.NavigateTo($"/products/{item.ProductId}/edit"))" />
+                        </MudPaper>
+                    }
+                }
+                else
+                {
+                    <div class="sf-empty-state">Inventory is healthy.</div>
+                }
+            </div>
+        </MudItem>
+    </MudGrid>
+}
+
+@code {
+    private DashboardSummaryDto? _summary;
+    private bool _loading = true;
+    private string? _error;
+    private List<ChartSeries> _salesSeries = new();
+    private string[] _salesLabels = Array.Empty<string>();
+    private double[] _categorySeries = Array.Empty<double>();
+    private string[] _categoryLabels = Array.Empty<string>();
+
+    private decimal RevenueDelta => CalculateDelta(_summary?.TodayRevenue ?? 0, _summary?.YesterdayRevenue ?? 0);
+    private decimal OrderDelta => CalculateDelta(_summary?.TodayOrders ?? 0, _summary?.YesterdayOrders ?? 0);
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (AuthService.Token != null)
+            ApiService.SetToken(AuthService.Token);
+
+        try
+        {
+            var from = DateTime.Today.AddDays(-30);
+            var to = DateTime.Today;
+            var summaryTask = ApiService.GetDashboardAsync();
+            var salesTask = ApiService.GetSalesReportAsync(from, to, "day");
+            var revenueTask = ApiService.GetRevenueByCategoryAsync(from, to);
+
+            await Task.WhenAll(summaryTask, salesTask, revenueTask);
+
+            _summary = summaryTask.Result?.Data;
+            BuildSalesChart(salesTask.Result?.Data ?? new());
+            BuildCategoryChart(revenueTask.Result?.Data ?? new());
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private void BuildSalesChart(List<SalesDataPointDto> data)
+    {
+        var ordered = data.OrderBy(x => x.Date).ToList();
+        _salesLabels = ordered.Select(x => x.Date.ToString("dd MMM")).ToArray();
+        _salesSeries = new()
+        {
+            new ChartSeries { Name = "Revenue", Data = ordered.Select(x => (double)x.Revenue).ToArray() },
+            new ChartSeries { Name = "Orders", Data = ordered.Select(x => (double)x.OrderCount).ToArray() }
+        };
+    }
+
+    private void BuildCategoryChart(List<RevenueDataPoint> data)
+    {
+        var ordered = data.OrderByDescending(x => x.Revenue).Take(6).ToList();
+        _categoryLabels = ordered.Select(x => x.Category).ToArray();
+        _categorySeries = ordered.Select(x => (double)x.Revenue).ToArray();
+    }
+
+    private static decimal CalculateDelta(decimal current, decimal previous)
+    {
+        if (previous == 0)
+            return current > 0 ? 100 : 0;
+
+        return Math.Round((current - previous) / previous * 100, 1);
+    }
+
+    private static string GetTrendClass(decimal value) => value >= 0 ? "sf-trend-positive" : "sf-trend-negative";
+
+    private static Color GetOrderColor(string status) => status switch
+    {
+        "Delivered" => Color.Success,
+        "Shipped" => Color.Info,
+        "Processing" => Color.Primary,
+        "Cancelled" => Color.Error,
+        _ => Color.Warning
+    };
+}

@@ -1,0 +1,34 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="ShopForge.Mobile.Views.Auth.RegisterPage"
+             Title="Create Account"
+             BackgroundColor="{StaticResource White}">
+    <ScrollView>
+        <VerticalStackLayout Padding="32,40,32,32" Spacing="12">
+            <Label Text="Create Account" FontSize="28" FontAttributes="Bold"
+                   TextColor="{StaticResource Primary}" HorizontalOptions="Center" />
+            <Label Text="Join ShopForge today" FontSize="16" TextColor="{StaticResource Gray600}"
+                   HorizontalOptions="Center" Margin="0,0,0,16" />
+            <Entry Placeholder="First Name" Text="{Binding FirstName}" />
+            <Entry Placeholder="Last Name" Text="{Binding LastName}" />
+            <Entry Placeholder="Email address" Text="{Binding Email}" Keyboard="Email" />
+            <Entry Placeholder="Password (min 8 chars)" Text="{Binding Password}" IsPassword="True" />
+            <Entry Placeholder="Confirm Password" Text="{Binding ConfirmPassword}" IsPassword="True" />
+            <Label Text="{Binding ErrorMessage}" TextColor="{StaticResource Error}"
+                   IsVisible="{Binding ErrorMessage, Converter={StaticResource NullToVisibilityConverter}}" />
+            <Button Text="Create Account" Command="{Binding RegisterCommand}" IsEnabled="{Binding IsNotBusy}"
+                    Style="{StaticResource PrimaryButton}" Margin="0,8,0,0" />
+            <ActivityIndicator IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}"
+                               Color="{StaticResource Primary}" />
+            <HorizontalStackLayout HorizontalOptions="Center" Spacing="4">
+                <Label Text="Already have an account?" TextColor="{StaticResource Gray600}" />
+                <Label Text="Sign In" TextColor="{StaticResource Primary}" FontAttributes="Bold">
+                    <Label.GestureRecognizers>
+                        <TapGestureRecognizer Command="{Binding GoToLoginCommand}" />
+                    </Label.GestureRecognizers>
+                </Label>
+            </HorizontalStackLayout>
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

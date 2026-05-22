@@ -1,0 +1,162 @@
+@page "/reports/sales"
+@rendermode InteractiveServer
+@inject IAdminApiService ApiService
+@inject IAdminAuthService AuthService
+
+<PageTitle>Sales Report</PageTitle>
+
+<section class="sf-page-hero">
+    <div>
+        <div class="sf-page-eyebrow">Sales intelligence</div>
+        <div class="sf-page-title">Revenue performance</div>
+        <div class="sf-page-subtitle">
+            Track order volume, revenue momentum, average order value, and customer acquisition by period.
+        </div>
+    </div>
+</section>
+
+<div class="sf-filter-bar">
+    <MudDatePicker @bind-Date="_from" Label="From" Variant="Variant.Outlined" />
+    <MudDatePicker @bind-Date="_to" Label="To" Variant="Variant.Outlined" />
+    <MudSelect @bind-Value="_groupBy" Label="Group By" Variant="Variant.Outlined" T="string">
+        <MudSelectItem Value="@("day")">Day</MudSelectItem>
+        <MudSelectItem Value="@("week")">Week</MudSelectItem>
+        <MudSelectItem Value="@("month")">Month</MudSelectItem>
+    </MudSelect>
+    <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.QueryStats" OnClick="Load">Analyze</MudButton>
+</div>
+
+@if (_loading)
+{
+    <MudSkeleton Height="120px" Class="mb-4" />
+    <MudSkeleton Height="360px" />
+}
+else
+{
+    <div class="sf-kpi-grid">
+        <div class="sf-kpi-card">
+            <div class="sf-kpi-label">Revenue</div>
+            <div class="sf-kpi-value">R @TotalRevenue.ToString("N0")</div>
+            <div class="sf-kpi-meta">Across @_data.Count grouped periods</div>
+        </div>
+        <div class="sf-kpi-card">
+            <div class="sf-kpi-label">Orders</div>
+            <div class="sf-kpi-value">@TotalOrders</div>
+            <div class="sf-kpi-meta">Completed demand signals</div>
+        </div>
+        <div class="sf-kpi-card">
+            <div class="sf-kpi-label">Average order</div>
+            <div class="sf-kpi-value">R @AverageOrderValue.ToString("N0")</div>
+            <div class="sf-kpi-meta">Blended AOV</div>
+        </div>
+        <div class="sf-kpi-card">
+            <div class="sf-kpi-label">New customers</div>
+            <div class="sf-kpi-value">@NewCustomers</div>
+            <div class="sf-kpi-meta">Acquired in period</div>
+        </div>
+    </div>
+
+    <MudGrid Class="mt-4">
+        <MudItem xs="12" lg="8">
+            <div class="sf-panel">
+                <div class="sf-panel-header">
+                    <div>
+                        <div class="sf-panel-title">Revenue and orders</div>
+                        <div class="sf-panel-caption">A combined view of financial output and transaction volume.</div>
+                    </div>
+                </div>
+                @if (_data.Count > 0)
+                {
+                    <MudChart ChartType="ChartType.Line" ChartSeries="@_series" XAxisLabels="@_labels" Width="100%" Height="340px" />
+                }
+                else
+                {
+                    <div class="sf-empty-state">No sales data exists for this date range.</div>
+                }
+            </div>
+        </MudItem>
+        <MudItem xs="12" lg="4">
+            <div class="sf-panel">
+                <div class="sf-panel-header">
+                    <div>
+                        <div class="sf-panel-title">Data story</div>
+                        <div class="sf-panel-caption">Quick read for the selected period.</div>
+                    </div>
+                </div>
+                <MudStack Spacing="2">
+                    <MudText Typo="Typo.body2">Best revenue period: <b>@BestRevenueLabel</b></MudText>
+                    <MudText Typo="Typo.body2">Best order period: <b>@BestOrderLabel</b></MudText>
+                    <MudText Typo="Typo.body2">Customer acquisition: <b>@NewCustomers</b> new customers</MudText>
+                    <MudAlert Severity="Severity.Info" Dense="true">
+                        Forecasting can be layered on top of this series once there is more historical data.
+                    </MudAlert>
+                </MudStack>
+            </div>
+        </MudItem>
+    </MudGrid>
+
+    <div class="sf-panel mt-4">
+        <div class="sf-panel-header">
+            <div>
+                <div class="sf-panel-title">Period breakdown</div>
+                <div class="sf-panel-caption">Raw reporting data behind the chart.</div>
+            </div>
+        </div>
+        <MudTable Items="_data" Dense="true" Hover="true" Breakpoint="Breakpoint.Sm">
+            <HeaderContent>
+                <MudTh>Date</MudTh>
+                <MudTh>Orders</MudTh>
+                <MudTh>Revenue</MudTh>
+                <MudTh>Avg Order Value</MudTh>
+                <MudTh>New Customers</MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd DataLabel="Date">@context.Date.ToString("dd MMM yyyy")</MudTd>
+                <MudTd DataLabel="Orders">@context.OrderCount</MudTd>
+                <MudTd DataLabel="Revenue">R @context.Revenue.ToString("N2")</MudTd>
+                <MudTd DataLabel="Avg Order Value">R @context.AverageOrderValue.ToString("N2")</MudTd>
+                <MudTd DataLabel="New Customers">@context.NewCustomers</MudTd>
+            </RowTemplate>
+            <NoRecordsContent>
+                <div class="sf-empty-state">No records for this range.</div>
+            </NoRecordsContent>
+        </MudTable>
+    </div>
+}
+
+@code {
+    private DateTime? _from = DateTime.Today.AddDays(-30);
+    private DateTime? _to = DateTime.Today;
+    private string _groupBy = "day";
+    private List<SalesDataPointDto> _data = new();
+    private List<ChartSeries> _series = new();
+    private string[] _labels = Array.Empty<string>();
+    private bool _loading;
+
+    private decimal TotalRevenue => _data.Sum(x => x.Revenue);
+    private int TotalOrders => _data.Sum(x => x.OrderCount);
+    private decimal AverageOrderValue => TotalOrders == 0 ? 0 : TotalRevenue / TotalOrders;
+    private int NewCustomers => _data.Sum(x => x.NewCustomers);
+    private string BestRevenueLabel => _data.Count == 0 ? "No data" : _data.MaxBy(x => x.Revenue)!.Date.ToString("dd MMM yyyy");
+    private string BestOrderLabel => _data.Count == 0 ? "No data" : _data.MaxBy(x => x.OrderCount)!.Date.ToString("dd MMM yyyy");
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (AuthService.Token != null) ApiService.SetToken(AuthService.Token);
+        await Load();
+    }
+
+    private async Task Load()
+    {
+        _loading = true;
+        var result = await ApiService.GetSalesReportAsync(_from ?? DateTime.Today.AddDays(-30), _to ?? DateTime.Today, _groupBy);
+        _data = (result?.Data ?? new()).OrderBy(x => x.Date).ToList();
+        _labels = _data.Select(x => x.Date.ToString(_groupBy == "month" ? "MMM yyyy" : "dd MMM")).ToArray();
+        _series = new()
+        {
+            new ChartSeries { Name = "Revenue", Data = _data.Select(x => (double)x.Revenue).ToArray() },
+            new ChartSeries { Name = "Orders", Data = _data.Select(x => (double)x.OrderCount).ToArray() }
+        };
+        _loading = false;
+    }
+}

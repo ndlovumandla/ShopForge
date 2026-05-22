@@ -1,0 +1,64 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:viewmodels="clr-namespace:ShopForge.Mobile.ViewModels"
+             x:Class="ShopForge.Mobile.Views.Orders.OrdersPage"
+             Title="My Orders">
+    <Grid RowDefinitions="Auto,*">
+        <CollectionView Grid.Row="0" ItemsSource="{Binding StatusFilters}" HeightRequest="56" Margin="0,4,0,0"
+                        ItemsLayout="HorizontalList" SelectionMode="None">
+            <CollectionView.ItemTemplate>
+                <DataTemplate x:DataType="viewmodels:StatusFilterOption">
+                    <Button Text="{Binding Name}" Padding="14,6" Margin="8,0,0,0" CornerRadius="16"
+                            Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.SetStatusFilterCommand}"
+                            CommandParameter="{Binding .}"
+                            BackgroundColor="{StaticResource Gray200}"
+                            TextColor="{StaticResource Gray900}" FontSize="12">
+                        <Button.Triggers>
+                            <DataTrigger TargetType="Button" Binding="{Binding IsSelected}" Value="True">
+                                <Setter Property="BackgroundColor" Value="{StaticResource Primary}" />
+                                <Setter Property="TextColor" Value="White" />
+                            </DataTrigger>
+                        </Button.Triggers>
+                    </Button>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+
+        <RefreshView Grid.Row="1" Command="{Binding RefreshCommand}" IsRefreshing="{Binding IsRefreshing}">
+            <CollectionView ItemsSource="{Binding Orders}">
+            <CollectionView.EmptyView>
+                <VerticalStackLayout HorizontalOptions="Center" VerticalOptions="Center" Spacing="12" Margin="40">
+                    <Label Text="&#x1F4E6;" FontSize="48" HorizontalOptions="Center" />
+                    <Label Text="No orders yet" FontSize="18" HorizontalOptions="Center" TextColor="{StaticResource Gray600}" />
+                </VerticalStackLayout>
+            </CollectionView.EmptyView>
+            <CollectionView.ItemTemplate>
+                <DataTemplate>
+                    <Border Margin="16,8" Padding="16" BackgroundColor="White" StrokeThickness="0">
+                        <Border.StrokeShape>
+                            <RoundRectangle CornerRadius="8" />
+                        </Border.StrokeShape>
+                        <Grid RowDefinitions="Auto,Auto,Auto" ColumnDefinitions="*,Auto">
+                            <Label Grid.Row="0" Grid.Column="0" Text="{Binding OrderNumber, StringFormat='Order #{0}'}" FontAttributes="Bold" FontSize="14" />
+                            <Label Grid.Row="0" Grid.Column="1" Text="{Binding Status}"
+                                   TextColor="{Binding Status, Converter={StaticResource StringToColorConverter}}"
+                                   FontAttributes="Bold" FontSize="13" />
+                            <Label Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2"
+                                   Text="{Binding CreatedAt, StringFormat='{0:MMM dd, yyyy}'}"
+                                   TextColor="{StaticResource Gray600}" FontSize="12" Margin="0,4,0,0" />
+                            <Label Grid.Row="2" Grid.Column="0" Text="{Binding ItemCount, StringFormat='{0} item(s)'}"
+                                   TextColor="{StaticResource Gray600}" FontSize="12" />
+                            <Label Grid.Row="2" Grid.Column="1" Text="{Binding TotalAmount, StringFormat='R{0:N2}'}"
+                                   FontAttributes="Bold" TextColor="{StaticResource Gray900}" FontSize="15" />
+                        </Grid>
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.NavigateToOrderCommand}" CommandParameter="{Binding .}" />
+                        </Border.GestureRecognizers>
+                    </Border>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+            </CollectionView>
+        </RefreshView>
+    </Grid>
+</ContentPage>

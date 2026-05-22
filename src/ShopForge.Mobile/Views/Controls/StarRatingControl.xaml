@@ -1,0 +1,10 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="ShopForge.Mobile.Views.Controls.StarRatingControl"
+             x:Name="this">
+    <HorizontalStackLayout Spacing="2" BindingContext="{x:Reference this}">
+        <Label Text="{Binding Rating, StringFormat='★ {0:F1}'}"
+               TextColor="{StaticResource Warning}" FontSize="14" />
+    </HorizontalStackLayout>
+</ContentView>

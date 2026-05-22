@@ -1,0 +1,60 @@
+using ShopForge.Shared.DTOs.Admin;
+using ShopForge.Shared.DTOs.Auth;
+using ShopForge.Shared.DTOs.Cart;
+using ShopForge.Shared.DTOs.Categories;
+using ShopForge.Shared.DTOs.Common;
+using ShopForge.Shared.DTOs.Orders;
+using ShopForge.Shared.DTOs.Payments;
+using ShopForge.Shared.DTOs.Products;
+using ShopForge.Shared.DTOs.Reviews;
+
+namespace ShopForge.Mobile.Services;
+
+public interface IApiService
+{
+    Task<ApiResponse<AuthResponse>?> LoginAsync(LoginRequest request);
+    Task<ApiResponse<AuthResponse>?> RegisterAsync(RegisterRequest request);
+    Task<ApiResponse<AuthResponse>?> RefreshTokenAsync(string refreshToken);
+    Task<ApiResponse<bool>?> LogoutAsync(string refreshToken);
+    Task<ApiResponse<UserProfileDto>?> GetProfileAsync();
+    Task<ApiResponse<UserProfileDto>?> UpdateProfileAsync(object request);
+    Task<ApiResponse<bool>?> ChangePasswordAsync(object request);
+    Task<ApiResponse<bool>?> ForgotPasswordAsync(string email);
+    Task<ApiResponse<PagedResult<ProductSummaryDto>>?> GetProductsAsync(int page = 1, int pageSize = 20, int? categoryId = null, int? brandId = null, decimal? minPrice = null, decimal? maxPrice = null, string? search = null, string? sort = null, bool? featured = null);
+    Task<ApiResponse<ProductDto>?> GetProductByIdAsync(int id);
+    Task<ApiResponse<ProductDto>?> GetProductBySlugAsync(string slug);
+    Task<ApiResponse<List<ProductSummaryDto>>?> GetFeaturedProductsAsync();
+    Task<ApiResponse<List<ProductSummaryDto>>?> GetNewArrivalsAsync();
+    Task<ApiResponse<PagedResult<ProductSummaryDto>>?> SearchProductsAsync(string query, int page = 1, int pageSize = 20);
+    Task<ApiResponse<PagedResult<ReviewDto>>?> GetProductReviewsAsync(int productId, int page = 1, int pageSize = 10);
+    Task<ApiResponse<ReviewDto>?> CreateReviewAsync(int productId, CreateReviewRequest request);
+    Task<ApiResponse<List<CategoryDto>>?> GetCategoriesAsync();
+    Task<ApiResponse<CartDto>?> GetCartAsync();
+    Task<ApiResponse<CartDto>?> AddToCartAsync(AddToCartRequest request);
+    Task<ApiResponse<CartDto>?> UpdateCartItemAsync(int itemId, UpdateCartItemRequest request);
+    Task<ApiResponse<bool>?> RemoveCartItemAsync(int itemId);
+    Task<ApiResponse<bool>?> ClearCartAsync();
+    Task<ApiResponse<CartDto>?> ApplyCouponAsync(string couponCode);
+    Task<ApiResponse<CartDto>?> RemoveCouponAsync();
+    Task<ApiResponse<List<ProductSummaryDto>>?> GetWishlistAsync();
+    Task<ApiResponse<bool>?> AddToWishlistAsync(int productId);
+    Task<ApiResponse<bool>?> RemoveFromWishlistAsync(int productId);
+    Task<ApiResponse<bool>?> MoveToCartAsync(int productId);
+    Task<ApiResponse<PagedResult<OrderSummaryDto>>?> GetOrdersAsync(int page = 1, int pageSize = 20);
+    Task<ApiResponse<OrderDto>?> GetOrderByIdAsync(int id);
+    Task<ApiResponse<OrderDto>?> CreateOrderAsync(CreateOrderRequest request);
+    Task<ApiResponse<OrderDto>?> CancelOrderAsync(int id, string reason);
+    Task<ApiResponse<PaymentReceiptDto>?> ProcessPaymentAsync(ProcessPaymentRequest request);
+    Task<ApiResponse<List<AddressDto>>?> GetAddressesAsync();
+    Task<ApiResponse<AddressDto>?> CreateAddressAsync(AddressDto address);
+    Task<ApiResponse<AddressDto>?> UpdateAddressAsync(int id, AddressDto address);
+    Task<ApiResponse<bool>?> DeleteAddressAsync(int id);
+    Task<ApiResponse<bool>?> SetDefaultAddressAsync(int id);
+    Task<ApiResponse<List<NotificationDto>>?> GetNotificationsAsync();
+    Task<ApiResponse<bool>?> MarkNotificationReadAsync(int id);
+    Task<ApiResponse<bool>?> MarkAllNotificationsReadAsync();
+    Task<ApiResponse<bool>?> DeleteNotificationAsync(int id);
+    Task<ApiResponse<List<BannerSlideDto>>?> GetBannersAsync();
+    Task<ApiResponse<List<ShippingMethodDto>>?> GetShippingMethodsAsync();
+    Task<ApiResponse<CouponValidationResult>?> ValidateCouponAsync(string code, decimal cartTotal);
+}

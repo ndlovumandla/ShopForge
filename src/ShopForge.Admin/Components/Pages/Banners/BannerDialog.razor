@@ -1,0 +1,46 @@
+<MudDialog>
+    <DialogContent>
+    <MudForm @ref="_form">
+        <MudTextField @bind-Value="_dto.Title" Label="Title" Variant="Variant.Outlined" Class="mb-3" />
+        <MudTextField @bind-Value="_dto.SubTitle" Label="Subtitle" Variant="Variant.Outlined" Class="mb-3" />
+        <MudTextField @bind-Value="_dto.ImageUrl" Label="Image URL" Required="true" Variant="Variant.Outlined" Class="mb-3" />
+        <MudTextField @bind-Value="_dto.LinkUrl" Label="Link URL" Variant="Variant.Outlined" Class="mb-3" />
+        <MudTextField @bind-Value="_dto.ButtonText" Label="Button Text" Variant="Variant.Outlined" Class="mb-3" />
+        <MudNumericField @bind-Value="_dto.DisplayOrder" Label="Display Order" Variant="Variant.Outlined" Class="mb-3" T="int" />
+        <MudSwitch @bind-Value="_dto.IsActive" Label="Active" Color="Color.Primary" />
+    </MudForm>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="Submit">Save</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter]
+    private IMudDialogInstance MudDialog { get; set; } = default!;
+
+    [Parameter] public BannerSlideDto? Banner { get; set; }
+    private MudForm? _form;
+    private BannerSlideDto _dto = new() { IsActive = true };
+
+    protected override void OnInitialized()
+    {
+        if (Banner != null)
+        {
+            _dto = new BannerSlideDto
+            {
+                Id = Banner.Id, Title = Banner.Title, SubTitle = Banner.SubTitle, ImageUrl = Banner.ImageUrl,
+                LinkUrl = Banner.LinkUrl, ButtonText = Banner.ButtonText, DisplayOrder = Banner.DisplayOrder,
+                IsActive = Banner.IsActive, StartsAt = Banner.StartsAt, ExpiresAt = Banner.ExpiresAt
+            };
+        }
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+    private async Task Submit()
+    {
+        await _form!.Validate();
+        if (_form.IsValid) MudDialog.Close(DialogResult.Ok(_dto));
+    }
+}

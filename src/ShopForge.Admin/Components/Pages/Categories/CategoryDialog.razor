@@ -1,0 +1,45 @@
+<MudDialog>
+    <DialogContent>
+    <MudForm @ref="_form">
+        <MudTextField @bind-Value="_request.Name" Label="Name" Required="true" Variant="Variant.Outlined" Class="mb-3" />
+        <MudTextField @bind-Value="_request.Slug" Label="Slug" Variant="Variant.Outlined" Class="mb-3" />
+        <MudTextField @bind-Value="_request.Description" Label="Description" Lines="2" Variant="Variant.Outlined" Class="mb-3" />
+        <MudTextField @bind-Value="_request.ImageUrl" Label="Image URL" Variant="Variant.Outlined" Class="mb-3" />
+        <MudNumericField @bind-Value="_request.DisplayOrder" Label="Display Order" Variant="Variant.Outlined" Class="mb-3" T="int" />
+        <MudSwitch @bind-Value="_request.IsActive" Label="Active" Color="Color.Primary" />
+    </MudForm>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="Submit">Save</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter]
+    private IMudDialogInstance MudDialog { get; set; } = default!;
+
+    [Parameter] public CategoryDto? Category { get; set; }
+    private MudForm? _form;
+    private CreateCategoryRequest _request = new() { IsActive = true };
+
+    protected override void OnInitialized()
+    {
+        if (Category != null)
+        {
+            _request = new CreateCategoryRequest
+            {
+                Name = Category.Name, Slug = Category.Slug, Description = Category.Description,
+                ImageUrl = Category.ImageUrl, IsActive = Category.IsActive,
+                DisplayOrder = Category.DisplayOrder, ParentCategoryId = Category.ParentCategoryId
+            };
+        }
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+    private async Task Submit()
+    {
+        await _form!.Validate();
+        if (_form.IsValid) MudDialog.Close(DialogResult.Ok(_request));
+    }
+}

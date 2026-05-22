@@ -1,0 +1,95 @@
+@page "/banners"
+@rendermode InteractiveServer
+@inject IAdminApiService ApiService
+@inject IAdminAuthService AuthService
+@inject IDialogService DialogService
+@inject ISnackbar Snackbar
+
+<PageTitle>Banners</PageTitle>
+<MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-4">
+    <MudText Typo="Typo.h4">Banners</MudText>
+    <MudSpacer />
+    <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="OpenCreateDialog">Add Banner</MudButton>
+</MudStack>
+
+<MudCard Elevation="2">
+    <MudCardContent>
+        <MudTable Items="_banners" Dense="true" Hover="true" Loading="_loading">
+            <HeaderContent>
+                <MudTh>Title</MudTh>
+                <MudTh>Subtitle</MudTh>
+                <MudTh>Order</MudTh>
+                <MudTh>Status</MudTh>
+                <MudTh>Actions</MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd>@context.Title</MudTd>
+                <MudTd>@context.SubTitle</MudTd>
+                <MudTd>@context.DisplayOrder</MudTd>
+                <MudTd>
+                    <MudChip T="string" Size="Size.Small" Color="@(context.IsActive ? Color.Success : Color.Default)">
+                        @(context.IsActive ? "Active" : "Inactive")
+                    </MudChip>
+                </MudTd>
+                <MudTd>
+                    <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" OnClick="() => OpenEditDialog(context)" />
+                    <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error" OnClick="() => DeleteBanner(context.Id)" />
+                </MudTd>
+            </RowTemplate>
+            <NoRecordsContent>
+                <MudText>No banners found.</MudText>
+            </NoRecordsContent>
+        </MudTable>
+    </MudCardContent>
+</MudCard>
+
+@code {
+    private List<BannerSlideDto> _banners = new();
+    private bool _loading = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (AuthService.Token != null) ApiService.SetToken(AuthService.Token);
+        await LoadBanners();
+    }
+
+    private async Task LoadBanners()
+    {
+        _loading = true;
+        var result = await ApiService.GetBannersAsync();
+        _banners = result?.Data ?? new();
+        _loading = false;
+    }
+
+    private async Task OpenCreateDialog()
+    {
+        var dialog = await DialogService.ShowAsync<BannerDialog>("Create Banner");
+        var result = await dialog.Result;
+        if (result is { Canceled: false } && result.Data is BannerSlideDto banner)
+        {
+            var r = await ApiService.CreateBannerAsync(banner);
+            if (r?.Success == true) { Snackbar.Add("Banner created", Severity.Success); await LoadBanners(); }
+            else Snackbar.Add(r?.Message ?? "Failed", Severity.Error);
+        }
+    }
+
+    private async Task OpenEditDialog(BannerSlideDto banner)
+    {
+        var parameters = new DialogParameters<BannerDialog> { { x => x.Banner, banner } };
+        var dialog = await DialogService.ShowAsync<BannerDialog>("Edit Banner", parameters);
+        var result = await dialog.Result;
+        if (result is { Canceled: false } && result.Data is BannerSlideDto updated)
+        {
+            var r = await ApiService.UpdateBannerAsync(banner.Id, updated);
+            if (r?.Success == true) { Snackbar.Add("Banner updated", Severity.Success); await LoadBanners(); }
+            else Snackbar.Add(r?.Message ?? "Failed", Severity.Error);
+        }
+    }
+
+    private async Task DeleteBanner(int id)
+    {
+        var result = await ApiService.DeleteBannerAsync(id);
+        if (result?.Success == true) { Snackbar.Add("Banner deleted", Severity.Success); await LoadBanners(); }
+        else Snackbar.Add("Delete failed", Severity.Error);
+    }
+}

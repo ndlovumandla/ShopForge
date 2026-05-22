@@ -1,0 +1,23 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="ShopForge.Mobile.Views.Account.AddressFormPage"
+             Title="{Binding Title}">
+    <ScrollView>
+        <VerticalStackLayout Padding="24" Spacing="10">
+            <Entry Placeholder="Label (Home, Work...)" Text="{Binding Label}" />
+            <Entry Placeholder="Full Name*" Text="{Binding FullName}" />
+            <Entry Placeholder="Phone Number" Text="{Binding PhoneNumber}" Keyboard="Telephone" />
+            <Entry Placeholder="Address Line 1*" Text="{Binding Line1}" />
+            <Entry Placeholder="Address Line 2" Text="{Binding Line2}" />
+            <Entry Placeholder="City*" Text="{Binding City}" />
+            <Entry Placeholder="State/Province" Text="{Binding State}" />
+            <Entry Placeholder="Postal Code" Text="{Binding PostalCode}" Keyboard="Numeric" />
+            <Entry Placeholder="Country" Text="{Binding Country}" />
+            <Label Text="{Binding ErrorMessage}" TextColor="{StaticResource Error}"
+                   IsVisible="{Binding ErrorMessage, Converter={StaticResource NullToVisibilityConverter}}" />
+            <Button Text="Save Address" Command="{Binding SaveCommand}" Style="{StaticResource PrimaryButton}" />
+            <ActivityIndicator IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}" Color="{StaticResource Primary}" />
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

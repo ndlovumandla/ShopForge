@@ -1,0 +1,39 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="ShopForge.Mobile.Views.Checkout.CheckoutShippingPage"
+             Title="Shipping Method">
+    <Grid RowDefinitions="*,Auto">
+        <CollectionView Grid.Row="0" ItemsSource="{Binding ShippingMethods}" SelectionMode="Single"
+                        SelectedItem="{Binding SelectedMethod}">
+            <CollectionView.ItemTemplate>
+                <DataTemplate>
+                    <Frame Margin="16,8" Padding="16" CornerRadius="8" HasShadow="True" BackgroundColor="White">
+                        <Grid ColumnDefinitions="*,Auto">
+                            <VerticalStackLayout Grid.Column="0" Spacing="4">
+                                <Label Text="{Binding Name}" FontAttributes="Bold" FontSize="15" />
+                                <Label Text="{Binding Description}" TextColor="{StaticResource Gray600}" FontSize="13" />
+                                <Label TextColor="{StaticResource Gray600}" FontSize="12">
+                                    <Label.Text>
+                                        <MultiBinding StringFormat="{}{0}-{1} business days">
+                                            <Binding Path="EstimatedDaysMin" />
+                                            <Binding Path="EstimatedDaysMax" />
+                                        </MultiBinding>
+                                    </Label.Text>
+                                </Label>
+                            </VerticalStackLayout>
+                            <Label Grid.Column="1" Text="{Binding Cost, StringFormat='R{0:N2}'}"
+                                   TextColor="{StaticResource Accent}" FontAttributes="Bold" FontSize="16" VerticalOptions="Center" />
+                        </Grid>
+                    </Frame>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+        <VerticalStackLayout Grid.Row="1" Padding="16" Spacing="8">
+            <Label Text="{Binding ErrorMessage}" TextColor="{StaticResource Error}"
+                   IsVisible="{Binding ErrorMessage, Converter={StaticResource NullToVisibilityConverter}}" />
+            <Button Text="Continue to Payment" Command="{Binding ContinueCommand}"
+                    Style="{StaticResource PrimaryButton}" />
+        </VerticalStackLayout>
+    </Grid>
+</ContentPage>

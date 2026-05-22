@@ -1,0 +1,171 @@
+@page "/reports/top-products"
+@rendermode InteractiveServer
+@inject IAdminApiService ApiService
+@inject IAdminAuthService AuthService
+
+<PageTitle>Top Products</PageTitle>
+
+<section class="sf-page-hero">
+    <div>
+        <div class="sf-page-eyebrow">Product intelligence</div>
+        <div class="sf-page-title">Winning products</div>
+        <div class="sf-page-subtitle">
+            Rank products by revenue or quantity to guide merchandising, inventory, and promotion decisions.
+        </div>
+    </div>
+</section>
+
+<div class="sf-filter-bar">
+    <MudDatePicker @bind-Date="_from" Label="From" Variant="Variant.Outlined" />
+    <MudDatePicker @bind-Date="_to" Label="To" Variant="Variant.Outlined" />
+    <MudSelect @bind-Value="_by" Label="Rank By" Variant="Variant.Outlined" T="string">
+        <MudSelectItem Value="@("revenue")">Revenue</MudSelectItem>
+        <MudSelectItem Value="@("quantity")">Quantity</MudSelectItem>
+    </MudSelect>
+    <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Leaderboard" OnClick="Load">Rank Products</MudButton>
+</div>
+
+@if (_loading)
+{
+    <MudSkeleton Height="120px" Class="mb-4" />
+    <MudSkeleton Height="360px" />
+}
+else
+{
+    <div class="sf-kpi-grid">
+        <div class="sf-kpi-card">
+            <div class="sf-kpi-label">Top revenue</div>
+            <div class="sf-kpi-value">R @TopRevenue.ToString("N0")</div>
+            <div class="sf-kpi-meta">@TopProductName</div>
+        </div>
+        <div class="sf-kpi-card">
+            <div class="sf-kpi-label">Units sold</div>
+            <div class="sf-kpi-value">@TotalUnits</div>
+            <div class="sf-kpi-meta">Top product set</div>
+        </div>
+        <div class="sf-kpi-card">
+            <div class="sf-kpi-label">Revenue captured</div>
+            <div class="sf-kpi-value">R @TotalRevenue.ToString("N0")</div>
+            <div class="sf-kpi-meta">From ranked products</div>
+        </div>
+        <div class="sf-kpi-card">
+            <div class="sf-kpi-label">Avg rating</div>
+            <div class="sf-kpi-value">@AverageRating.ToString("N1")</div>
+            <div class="sf-kpi-meta">Weighted product signal</div>
+        </div>
+    </div>
+
+    <MudGrid Class="mt-4">
+        <MudItem xs="12" lg="7">
+            <div class="sf-panel">
+                <div class="sf-panel-header">
+                    <div>
+                        <div class="sf-panel-title">Top product comparison</div>
+                        <div class="sf-panel-caption">Revenue distribution across your leading products.</div>
+                    </div>
+                </div>
+                @if (_series.Any() && _labels.Any())
+                {
+                    <MudChart ChartType="ChartType.Bar" ChartSeries="@_series" XAxisLabels="@_labels" Width="100%" Height="360px" />
+                }
+                else
+                {
+                    <div class="sf-empty-state">No product performance data for this range.</div>
+                }
+            </div>
+        </MudItem>
+        <MudItem xs="12" lg="5">
+            <div class="sf-panel">
+                <div class="sf-panel-header">
+                    <div>
+                        <div class="sf-panel-title">Merchandising notes</div>
+                        <div class="sf-panel-caption">Quick operational guidance.</div>
+                    </div>
+                </div>
+                <MudStack Spacing="2">
+                    <MudText Typo="Typo.body2">Leader: <b>@TopProductName</b></MudText>
+                    <MudText Typo="Typo.body2">Primary category: <b>@TopCategoryName</b></MudText>
+                    <MudText Typo="Typo.body2">Best-seller quantity: <b>@TopQuantity</b> units</MudText>
+                    <MudAlert Severity="Severity.Success" Dense="true">
+                        Promote top products with healthy stock and high ratings first.
+                    </MudAlert>
+                </MudStack>
+            </div>
+        </MudItem>
+    </MudGrid>
+
+    <div class="sf-panel mt-4">
+        <div class="sf-panel-header">
+            <div>
+                <div class="sf-panel-title">Ranked products</div>
+                <div class="sf-panel-caption">Detailed performance by SKU.</div>
+            </div>
+        </div>
+        <MudTable Items="_data" Dense="true" Hover="true" Breakpoint="Breakpoint.Sm">
+            <HeaderContent>
+                <MudTh>Rank</MudTh>
+                <MudTh>Product</MudTh>
+                <MudTh>SKU</MudTh>
+                <MudTh>Category</MudTh>
+                <MudTh>Qty Sold</MudTh>
+                <MudTh>Revenue</MudTh>
+                <MudTh>Avg Rating</MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd DataLabel="Rank">#@context.Rank</MudTd>
+                <MudTd DataLabel="Product">@context.ProductName</MudTd>
+                <MudTd DataLabel="SKU">@context.SKU</MudTd>
+                <MudTd DataLabel="Category">@context.CategoryName</MudTd>
+                <MudTd DataLabel="Qty Sold">@context.QuantitySold</MudTd>
+                <MudTd DataLabel="Revenue">R @context.Revenue.ToString("N2")</MudTd>
+                <MudTd DataLabel="Avg Rating">@context.AverageRating.ToString("N1")</MudTd>
+            </RowTemplate>
+            <NoRecordsContent>
+                <div class="sf-empty-state">No records for this range.</div>
+            </NoRecordsContent>
+        </MudTable>
+    </div>
+}
+
+@code {
+    private DateTime? _from = DateTime.Today.AddDays(-30);
+    private DateTime? _to = DateTime.Today;
+    private string _by = "revenue";
+    private List<TopProductDto> _data = new();
+    private List<ChartSeries> _series = new();
+    private string[] _labels = Array.Empty<string>();
+    private bool _loading;
+
+    private string TopProductName => _data.Count == 0 ? "No data" : _data[0].ProductName;
+    private string? TopCategoryName => _data.Count == 0 ? "No data" : _data[0].CategoryName;
+    private decimal TopRevenue => _data.Count == 0 ? 0 : _data[0].Revenue;
+    private int TopQuantity => _data.Count == 0 ? 0 : _data[0].QuantitySold;
+    private int TotalUnits => _data.Sum(x => x.QuantitySold);
+    private decimal TotalRevenue => _data.Sum(x => x.Revenue);
+    private double AverageRating => _data.Count == 0 ? 0 : _data.Average(x => x.AverageRating);
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (AuthService.Token != null) ApiService.SetToken(AuthService.Token);
+        await Load();
+    }
+
+    private async Task Load()
+    {
+        _loading = true;
+        var result = await ApiService.GetTopProductsAsync(_from ?? DateTime.Today.AddDays(-30), _to ?? DateTime.Today, _by);
+        _data = (result?.Data ?? new())
+            .OrderByDescending(x => _by == "quantity" ? x.QuantitySold : (double)x.Revenue)
+            .ToList();
+        _labels = _data.Take(8).Select(x => x.ProductName.Length > 18 ? $"{x.ProductName[..18]}..." : x.ProductName).ToArray();
+        _series = new()
+        {
+            new ChartSeries
+            {
+                Name = _by == "quantity" ? "Quantity sold" : "Revenue",
+                Data = _data.Take(8).Select(x => _by == "quantity" ? (double)x.QuantitySold : (double)x.Revenue).ToArray()
+            }
+        };
+        _loading = false;
+    }
+}

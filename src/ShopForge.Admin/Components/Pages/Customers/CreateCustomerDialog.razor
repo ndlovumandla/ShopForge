@@ -1,0 +1,46 @@
+<MudDialog>
+    <DialogContent>
+        <MudForm @ref="_form">
+            <MudTextField @bind-Value="_request.FirstName" Label="First Name" Required="true" Variant="Variant.Outlined" Class="mb-3" />
+            <MudTextField @bind-Value="_request.LastName" Label="Last Name" Required="true" Variant="Variant.Outlined" Class="mb-3" />
+            <MudTextField @bind-Value="_request.Email" Label="Email" InputType="InputType.Email" Required="true" Variant="Variant.Outlined" Class="mb-3" />
+            <MudTextField @bind-Value="_request.Password" Label="Password" InputType="InputType.Password" Required="true" Variant="Variant.Outlined" Class="mb-3" />
+            <MudTextField @bind-Value="_request.ConfirmPassword" Label="Confirm Password" InputType="InputType.Password" Required="true" Variant="Variant.Outlined" />
+        </MudForm>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel" Variant="Variant.Text">Cancel</MudButton>
+        <MudButton OnClick="Submit" Color="Color.Primary" Variant="Variant.Filled">Create</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter]
+    private IMudDialogInstance MudDialog { get; set; } = default!;
+
+    private MudForm? _form;
+    private RegisterRequest _request = new();
+
+    private void Cancel() => MudDialog.Cancel();
+
+    private async Task Submit()
+    {
+        await _form!.Validate();
+
+        if (string.IsNullOrWhiteSpace(_request.FirstName) ||
+            string.IsNullOrWhiteSpace(_request.LastName) ||
+            string.IsNullOrWhiteSpace(_request.Email) ||
+            string.IsNullOrWhiteSpace(_request.Password) ||
+            string.IsNullOrWhiteSpace(_request.ConfirmPassword))
+        {
+            return;
+        }
+
+        if (_request.Password.Length < 8 || _request.Password != _request.ConfirmPassword)
+        {
+            return;
+        }
+
+        MudDialog.Close(DialogResult.Ok(_request));
+    }
+}

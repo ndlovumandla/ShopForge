@@ -1,0 +1,202 @@
+@page "/orders/{Id:int}"
+@rendermode InteractiveServer
+@inject IAdminApiService ApiService
+@inject IAdminAuthService AuthService
+@inject ISnackbar Snackbar
+@inject IJSRuntime JS
+@inject NavigationManager Nav
+
+<PageTitle>Order Detail</PageTitle>
+
+@if (_loading)
+{
+    <MudProgressLinear Indeterminate="true" />
+}
+else if (_order != null)
+{
+    <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-4">
+        <MudText Typo="Typo.h4">Order @_order.OrderNumber</MudText>
+        <MudSpacer />
+        <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Print" OnClick="PrintInvoice">Print Invoice</MudButton>
+        <MudButton Variant="Variant.Text" Color="Color.Primary" OnClick='() => Nav.NavigateTo("/orders")'>Back</MudButton>
+        <MudChip T="string" Color="Color.Primary">@_order.Status</MudChip>
+    </MudStack>
+
+    <MudGrid>
+        <MudItem xs="12" md="8">
+            <MudCard Elevation="2" Class="mb-4">
+                <MudCardHeader><CardHeaderContent><MudText Typo="Typo.h6">Items</MudText></CardHeaderContent></MudCardHeader>
+                <MudCardContent>
+                    <MudTable Items="_order.Items" Dense="true">
+                        <HeaderContent>
+                            <MudTh>Product</MudTh>
+                            <MudTh>SKU</MudTh>
+                            <MudTh>Qty</MudTh>
+                            <MudTh>Unit Price</MudTh>
+                            <MudTh>Total</MudTh>
+                        </HeaderContent>
+                        <RowTemplate>
+                            <MudTd>@context.ProductName @context.VariantName</MudTd>
+                            <MudTd>@context.SKU</MudTd>
+                            <MudTd>@context.Quantity</MudTd>
+                            <MudTd>R @context.UnitPrice.ToString("N2")</MudTd>
+                            <MudTd>R @context.TotalPrice.ToString("N2")</MudTd>
+                        </RowTemplate>
+                    </MudTable>
+                </MudCardContent>
+            </MudCard>
+
+            <MudCard Elevation="2">
+                <MudCardHeader><CardHeaderContent><MudText Typo="Typo.h6">Update Status</MudText></CardHeaderContent></MudCardHeader>
+                <MudCardContent>
+                    <MudStack Row="true">
+                        <MudSelect @bind-Value="_newStatus" Label="New Status" Variant="Variant.Outlined" T="string">
+                            <MudSelectItem Value="@("Pending")">Pending</MudSelectItem>
+                            <MudSelectItem Value="@("Processing")">Processing</MudSelectItem>
+                            <MudSelectItem Value="@("Shipped")">Shipped</MudSelectItem>
+                            <MudSelectItem Value="@("Delivered")">Delivered</MudSelectItem>
+                            <MudSelectItem Value="@("Cancelled")">Cancelled</MudSelectItem>
+                        </MudSelect>
+                        <MudTextField @bind-Value="_statusNote" Label="Note" Variant="Variant.Outlined" />
+                        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="UpdateStatus">Update</MudButton>
+                    </MudStack>
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+
+        <MudItem xs="12" md="4">
+            <MudCard Elevation="2" Class="mb-4">
+                <MudCardHeader><CardHeaderContent><MudText Typo="Typo.h6">Customer</MudText></CardHeaderContent></MudCardHeader>
+                <MudCardContent>
+                    <MudText>@_order.CustomerName</MudText>
+                    <MudText Typo="Typo.body2">@_order.CustomerEmail</MudText>
+                </MudCardContent>
+            </MudCard>
+
+            <MudCard Elevation="2" Class="mb-4">
+                <MudCardHeader><CardHeaderContent><MudText Typo="Typo.h6">Summary</MudText></CardHeaderContent></MudCardHeader>
+                <MudCardContent>
+                    <MudStack>
+                        <MudStack Row="true" Justify="Justify.SpaceBetween"><MudText>Subtotal</MudText><MudText>R @_order.SubTotal.ToString("N2")</MudText></MudStack>
+                        <MudStack Row="true" Justify="Justify.SpaceBetween"><MudText>Shipping</MudText><MudText>R @_order.ShippingCost.ToString("N2")</MudText></MudStack>
+                        <MudStack Row="true" Justify="Justify.SpaceBetween"><MudText>Tax</MudText><MudText>R @_order.TaxAmount.ToString("N2")</MudText></MudStack>
+                        <MudStack Row="true" Justify="Justify.SpaceBetween"><MudText>Discount</MudText><MudText>-R @_order.DiscountAmount.ToString("N2")</MudText></MudStack>
+                        <MudDivider />
+                        <MudStack Row="true" Justify="Justify.SpaceBetween"><MudText Typo="Typo.h6">Total</MudText><MudText Typo="Typo.h6">R @_order.TotalAmount.ToString("N2")</MudText></MudStack>
+                    </MudStack>
+                </MudCardContent>
+            </MudCard>
+
+            <MudCard Elevation="2" Class="mb-4">
+                <MudCardHeader><CardHeaderContent><MudText Typo="Typo.h6">Tracking</MudText></CardHeaderContent></MudCardHeader>
+                <MudCardContent>
+                    <MudStack Row="true" AlignItems="AlignItems.Center">
+                        <MudTextField @bind-Value="_trackingNumber" Label="Tracking Number" Variant="Variant.Outlined" />
+                        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SaveTracking">Save</MudButton>
+                    </MudStack>
+                </MudCardContent>
+            </MudCard>
+
+            @if (_order.Payment != null)
+            {
+                <MudCard Elevation="2">
+                    <MudCardHeader><CardHeaderContent><MudText Typo="Typo.h6">Payment</MudText></CardHeaderContent></MudCardHeader>
+                    <MudCardContent>
+                        <MudText>Method: @_order.Payment.Method</MudText>
+                        <MudText>Status: @_order.Payment.Status</MudText>
+                        <MudText>Amount: R @_order.Payment.Amount.ToString("N2")</MudText>
+                        <MudStack Row="true" Class="mt-2">
+                            <MudButton Variant="Variant.Outlined" Color="Color.Error" Disabled="@(!CanRefund)" OnClick="RefundOrder">
+                                Refund Payment
+                            </MudButton>
+                        </MudStack>
+                        @if (_order.Payment.CardLastFour != null)
+                        {
+                            <MudText>Card: **** @_order.Payment.CardLastFour</MudText>
+                        }
+                    </MudCardContent>
+                </MudCard>
+            }
+        </MudItem>
+    </MudGrid>
+}
+
+@code {
+    [Parameter] public int Id { get; set; }
+    private OrderDto? _order;
+    private bool _loading = true;
+    private string _newStatus = "";
+    private string _statusNote = "";
+    private string? _trackingNumber;
+
+    private bool CanRefund => _order?.Payment != null &&
+                              string.Equals(_order.Payment.Status, "Completed", StringComparison.OrdinalIgnoreCase);
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (AuthService.Token != null) ApiService.SetToken(AuthService.Token);
+        var result = await ApiService.GetOrderAsync(Id);
+        _order = result?.Data;
+        _newStatus = _order?.Status ?? "";
+        _trackingNumber = _order?.TrackingNumber;
+        _loading = false;
+    }
+
+    private async Task UpdateStatus()
+    {
+        var result = await ApiService.UpdateOrderStatusAsync(Id, new UpdateOrderStatusRequest { Status = _newStatus, Note = _statusNote });
+        if (result?.Success == true)
+        {
+            Snackbar.Add("Status updated", Severity.Success);
+            if (_order != null) _order.Status = _newStatus;
+        }
+        else
+        {
+            Snackbar.Add("Update failed", Severity.Error);
+        }
+    }
+
+    private async Task SaveTracking()
+    {
+        if (string.IsNullOrWhiteSpace(_trackingNumber))
+        {
+            Snackbar.Add("Enter a tracking number first.", Severity.Warning);
+            return;
+        }
+
+        var result = await ApiService.SetTrackingNumberAsync(Id, _trackingNumber);
+        if (result?.Success == true)
+        {
+            Snackbar.Add("Tracking number updated", Severity.Success);
+            if (_order != null)
+            {
+                _order.TrackingNumber = _trackingNumber;
+            }
+        }
+        else
+        {
+            Snackbar.Add(result?.Message ?? "Unable to update tracking number", Severity.Error);
+        }
+    }
+
+    private async Task RefundOrder()
+    {
+        var result = await ApiService.RefundOrderAsync(Id);
+        if (result?.Success == true)
+        {
+            Snackbar.Add("Payment refunded", Severity.Success);
+            var refreshed = await ApiService.GetOrderAsync(Id);
+            if (refreshed?.Data != null)
+            {
+                _order = refreshed.Data;
+                _newStatus = _order.Status;
+            }
+        }
+        else
+        {
+            Snackbar.Add(result?.Message ?? "Unable to refund payment", Severity.Error);
+        }
+    }
+
+    private async Task PrintInvoice() => await JS.InvokeVoidAsync("window.print");
+}

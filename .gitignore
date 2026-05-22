@@ -1,0 +1,59 @@
+# Build outputs
+bin/
+obj/
+out/
+publish/
+artifacts/
+
+# User and IDE state
+.vs/
+.vscode/
+.idea/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Test and coverage output
+TestResults/
+coverage/
+coverage.xml
+*.coverage
+*.coveragexml
+*.trx
+
+# Logs and diagnostics
+logs/
+*.log
+*.tmp
+*.temp
+
+# Local configuration and secrets
+appsettings.Development.local.json
+appsettings.Local.json
+*.secrets.json
+.env
+.env.*
+!.env.example
+
+# Database files
+*.db
+*.db-shm
+*.db-wal
+*.mdf
+*.ldf
+
+# Uploaded runtime media
+src/ShopForge.Api/wwwroot/uploads/
+
+# Node tooling used for local docs/screenshots
+node_modules/
+package-lock.json
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini

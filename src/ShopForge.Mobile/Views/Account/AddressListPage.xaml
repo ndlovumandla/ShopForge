@@ -1,0 +1,57 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="ShopForge.Mobile.Views.Account.AddressListPage"
+             Title="My Addresses">
+    <Grid RowDefinitions="*,Auto">
+        <CollectionView Grid.Row="0" ItemsSource="{Binding Addresses}">
+            <CollectionView.ItemTemplate>
+                <DataTemplate>
+                    <SwipeView>
+                        <SwipeView.RightItems>
+                            <SwipeItems>
+                                <SwipeItem Text="Delete" BackgroundColor="{StaticResource Error}"
+                                           Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.DeleteCommand}"
+                                           CommandParameter="{Binding .}" />
+                            </SwipeItems>
+                        </SwipeView.RightItems>
+                        <Frame Margin="16,8" Padding="16" CornerRadius="8" HasShadow="True" BackgroundColor="White">
+                            <Grid ColumnDefinitions="*,Auto">
+                                <VerticalStackLayout Grid.Column="0" Spacing="4">
+                                    <HorizontalStackLayout Spacing="6">
+                                        <Label Text="{Binding Label}" FontAttributes="Bold" FontSize="14" />
+                                        <Label Text="Default" TextColor="{StaticResource Success}" FontSize="11"
+                                               IsVisible="{Binding IsDefault}" />
+                                    </HorizontalStackLayout>
+                                    <Label Text="{Binding FullName}" FontSize="13" />
+                                    <Label Text="{Binding Line1}" TextColor="{StaticResource Gray600}" FontSize="12" />
+                                    <Label TextColor="{StaticResource Gray600}" FontSize="12">
+                                        <Label.Text>
+                                            <MultiBinding StringFormat="{}{0}, {1}">
+                                                <Binding Path="City" />
+                                                <Binding Path="PostalCode" />
+                                            </MultiBinding>
+                                        </Label.Text>
+                                    </Label>
+                                </VerticalStackLayout>
+                                <VerticalStackLayout Grid.Column="1" Spacing="4">
+                                    <Button Text="Edit" Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.EditCommand}"
+                                            CommandParameter="{Binding .}"
+                                            BackgroundColor="{StaticResource Gray200}" TextColor="{StaticResource Gray900}"
+                                            CornerRadius="6" FontSize="12" HeightRequest="34" Padding="8,0" />
+                                    <Button Text="Set Default" Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.SetDefaultCommand}"
+                                            CommandParameter="{Binding .}"
+                                            BackgroundColor="{StaticResource PrimaryLight}" TextColor="White"
+                                            CornerRadius="6" FontSize="11" HeightRequest="34" Padding="8,0"
+                                            IsVisible="{Binding IsDefault, Converter={StaticResource InvertedBoolConverter}}" />
+                                </VerticalStackLayout>
+                            </Grid>
+                        </Frame>
+                    </SwipeView>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+        <Button Grid.Row="1" Text="+ Add New Address" Command="{Binding AddCommand}"
+                Style="{StaticResource PrimaryButton}" Margin="16" />
+    </Grid>
+</ContentPage>

@@ -1,0 +1,95 @@
+@page "/categories"
+@rendermode InteractiveServer
+@inject IAdminApiService ApiService
+@inject IAdminAuthService AuthService
+@inject IDialogService DialogService
+@inject ISnackbar Snackbar
+
+<PageTitle>Categories</PageTitle>
+<MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-4">
+    <MudText Typo="Typo.h4">Categories</MudText>
+    <MudSpacer />
+    <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="OpenCreateDialog">Add Category</MudButton>
+</MudStack>
+
+<MudCard Elevation="2">
+    <MudCardContent>
+        <MudTable Items="_categories" Dense="true" Hover="true" Loading="_loading">
+            <HeaderContent>
+                <MudTh>Name</MudTh>
+                <MudTh>Parent</MudTh>
+                <MudTh>Products</MudTh>
+                <MudTh>Status</MudTh>
+                <MudTh>Actions</MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd>@context.Name</MudTd>
+                <MudTd>@(context.ParentCategoryName ?? "-")</MudTd>
+                <MudTd>@context.ProductCount</MudTd>
+                <MudTd>
+                    <MudChip T="string" Size="Size.Small" Color="@(context.IsActive ? Color.Success : Color.Default)">
+                        @(context.IsActive ? "Active" : "Inactive")
+                    </MudChip>
+                </MudTd>
+                <MudTd>
+                    <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" OnClick="() => OpenEditDialog(context)" />
+                    <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error" OnClick="() => DeleteCategory(context.Id)" />
+                </MudTd>
+            </RowTemplate>
+            <NoRecordsContent>
+                <MudText>No categories found.</MudText>
+            </NoRecordsContent>
+        </MudTable>
+    </MudCardContent>
+</MudCard>
+
+@code {
+    private List<CategoryDto> _categories = new();
+    private bool _loading = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (AuthService.Token != null) ApiService.SetToken(AuthService.Token);
+        await LoadCategories();
+    }
+
+    private async Task LoadCategories()
+    {
+        _loading = true;
+        var result = await ApiService.GetCategoriesAsync();
+        _categories = result?.Data ?? new();
+        _loading = false;
+    }
+
+    private async Task OpenCreateDialog()
+    {
+        var dialog = await DialogService.ShowAsync<CategoryDialog>("Create Category");
+        var result = await dialog.Result;
+        if (result is { Canceled: false } && result.Data is CreateCategoryRequest req)
+        {
+            var r = await ApiService.CreateCategoryAsync(req);
+            if (r?.Success == true) { Snackbar.Add("Category created", Severity.Success); await LoadCategories(); }
+            else Snackbar.Add(r?.Message ?? "Failed", Severity.Error);
+        }
+    }
+
+    private async Task OpenEditDialog(CategoryDto category)
+    {
+        var parameters = new DialogParameters<CategoryDialog> { { x => x.Category, category } };
+        var dialog = await DialogService.ShowAsync<CategoryDialog>("Edit Category", parameters);
+        var result = await dialog.Result;
+        if (result is { Canceled: false } && result.Data is CreateCategoryRequest req)
+        {
+            var r = await ApiService.UpdateCategoryAsync(category.Id, req);
+            if (r?.Success == true) { Snackbar.Add("Category updated", Severity.Success); await LoadCategories(); }
+            else Snackbar.Add(r?.Message ?? "Failed", Severity.Error);
+        }
+    }
+
+    private async Task DeleteCategory(int id)
+    {
+        var result = await ApiService.DeleteCategoryAsync(id);
+        if (result?.Success == true) { Snackbar.Add("Category deleted", Severity.Success); await LoadCategories(); }
+        else Snackbar.Add("Delete failed", Severity.Error);
+    }
+}

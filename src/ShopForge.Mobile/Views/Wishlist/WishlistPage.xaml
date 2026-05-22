@@ -1,0 +1,46 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="ShopForge.Mobile.Views.Wishlist.WishlistPage"
+             Title="Wishlist">
+    <Grid RowDefinitions="Auto,*">
+        <Button Grid.Row="0" Text="Move All to Cart" Command="{Binding MoveAllToCartCommand}"
+                Margin="16,8" Style="{StaticResource PrimaryButton}"
+                IsVisible="{Binding Products.Count, Converter={StaticResource BoolToVisibilityConverter}}" />
+
+        <CollectionView Grid.Row="1" ItemsSource="{Binding Products}">
+            <CollectionView.EmptyView>
+                <VerticalStackLayout HorizontalOptions="Center" VerticalOptions="Center" Spacing="12" Margin="40">
+                    <Label Text="&#x2661;" FontSize="64" HorizontalOptions="Center" TextColor="{StaticResource Gray400}" />
+                    <Label Text="Your wishlist is empty" FontSize="18" HorizontalOptions="Center" TextColor="{StaticResource Gray600}" />
+                </VerticalStackLayout>
+            </CollectionView.EmptyView>
+            <CollectionView.ItemTemplate>
+                <DataTemplate>
+                    <SwipeView>
+                    <SwipeView.RightItems>
+                        <SwipeItems>
+                            <SwipeItem Text="Remove" BackgroundColor="{StaticResource Error}"
+                                       Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.RemoveCommand}"
+                                       CommandParameter="{Binding .}" />
+                        </SwipeItems>
+                    </SwipeView.RightItems>
+                    <Grid Padding="16,8" ColumnDefinitions="Auto,*,Auto">
+                        <Image Grid.Column="0" Source="{Binding PrimaryImageUrl}" WidthRequest="80" HeightRequest="80" Aspect="AspectFill" BackgroundColor="{StaticResource Gray200}" />
+                        <VerticalStackLayout Grid.Column="1" Padding="12,0" Spacing="4">
+                            <Label Text="{Binding Name}" FontAttributes="Bold" FontSize="14" MaxLines="2" />
+                            <Label Text="{Binding Price, StringFormat='R{0:N2}'}" TextColor="{StaticResource Accent}" FontAttributes="Bold" FontSize="15" />
+                        </VerticalStackLayout>
+                        <Button Grid.Column="2" Text="&#x1F6D2;" Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.MoveToCartCommand}"
+                                CommandParameter="{Binding .}" BackgroundColor="{StaticResource Primary}"
+                                TextColor="White" CornerRadius="8" WidthRequest="48" HeightRequest="48" />
+                        <Grid.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.NavigateToProductCommand}" CommandParameter="{Binding .}" />
+                        </Grid.GestureRecognizers>
+                    </Grid>
+                    </SwipeView>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+    </Grid>
+</ContentPage>

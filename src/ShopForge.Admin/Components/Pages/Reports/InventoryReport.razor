@@ -1,0 +1,178 @@
+@page "/reports/inventory"
+@rendermode InteractiveServer
+@inject IAdminApiService ApiService
+@inject IAdminAuthService AuthService
+@inject IDialogService DialogService
+@inject ISnackbar Snackbar
+
+<PageTitle>Inventory Report</PageTitle>
+
+<section class="sf-page-hero">
+    <div>
+        <div class="sf-page-eyebrow">Inventory operations</div>
+        <div class="sf-page-title">Stock health</div>
+        <div class="sf-page-subtitle">
+            Monitor availability risk, prioritize restocks, and keep sellable inventory healthy.
+        </div>
+    </div>
+</section>
+
+<div class="sf-filter-bar">
+    <MudSelect @bind-Value="_filter" Label="Filter" Variant="Variant.Outlined" Style="min-width:160px" T="string">
+        <MudSelectItem Value="@("all")">All</MudSelectItem>
+        <MudSelectItem Value="@("out")">Out of Stock</MudSelectItem>
+        <MudSelectItem Value="@("low")">Low Stock</MudSelectItem>
+    </MudSelect>
+</div>
+
+@if (_loading)
+{
+    <MudSkeleton Height="120px" Class="mb-4" />
+    <MudSkeleton Height="360px" />
+}
+else
+{
+    <div class="sf-kpi-grid">
+        <div class="sf-kpi-card">
+            <div class="sf-kpi-label">Tracked SKUs</div>
+            <div class="sf-kpi-value">@_data.Count</div>
+            <div class="sf-kpi-meta">Active inventory items</div>
+        </div>
+        <div class="sf-kpi-card">
+            <div class="sf-kpi-label">Out of stock</div>
+            <div class="sf-kpi-value">@OutOfStockCount</div>
+            <div class="sf-kpi-meta">Immediate sales risk</div>
+        </div>
+        <div class="sf-kpi-card">
+            <div class="sf-kpi-label">Low stock</div>
+            <div class="sf-kpi-value">@LowStockCount</div>
+            <div class="sf-kpi-meta">Restock soon</div>
+        </div>
+        <div class="sf-kpi-card">
+            <div class="sf-kpi-label">Healthy</div>
+            <div class="sf-kpi-value">@HealthyCount</div>
+            <div class="sf-kpi-meta">Ready to sell</div>
+        </div>
+    </div>
+
+    <MudGrid Class="mt-4">
+        <MudItem xs="12" lg="4">
+            <div class="sf-panel">
+                <div class="sf-panel-header">
+                    <div>
+                        <div class="sf-panel-title">Stock distribution</div>
+                        <div class="sf-panel-caption">Inventory risk segmentation.</div>
+                    </div>
+                </div>
+                <MudChart ChartType="ChartType.Donut" InputData="@_stockChartData" InputLabels="@_stockChartLabels" Width="100%" Height="320px" />
+            </div>
+        </MudItem>
+        <MudItem xs="12" lg="8">
+            <div class="sf-panel">
+                <div class="sf-panel-header">
+                    <div>
+                        <div class="sf-panel-title">Inventory detail</div>
+                        <div class="sf-panel-caption">Filtered stock list with one-click restock actions.</div>
+                    </div>
+                </div>
+                <MudTable Items="FilteredItems" Dense="true" Hover="true" Breakpoint="Breakpoint.Sm">
+                    <HeaderContent>
+                        <MudTh>Product</MudTh>
+                        <MudTh>SKU</MudTh>
+                        <MudTh>Category</MudTh>
+                        <MudTh>Stock</MudTh>
+                        <MudTh>Status</MudTh>
+                        <MudTh>Action</MudTh>
+                    </HeaderContent>
+                    <RowTemplate>
+                        <MudTd DataLabel="Product">@context.ProductName</MudTd>
+                        <MudTd DataLabel="SKU">@context.SKU</MudTd>
+                        <MudTd DataLabel="Category">@context.CategoryName</MudTd>
+                        <MudTd DataLabel="Stock">
+                            <MudText Color="@(context.StockQuantity == 0 ? Color.Error : context.StockQuantity <= context.LowStockThreshold ? Color.Warning : Color.Default)">
+                                @context.StockQuantity
+                            </MudText>
+                        </MudTd>
+                        <MudTd DataLabel="Status">
+                            <MudChip T="string" Size="Size.Small" Color="@GetStatusColor(context.StockStatus)">@context.StockStatus</MudChip>
+                        </MudTd>
+                        <MudTd DataLabel="Action">
+                            <MudButton Variant="Variant.Text" Color="Color.Primary" StartIcon="@Icons.Material.Filled.AddCircle" OnClick="() => Restock(context)">
+                                Restock
+                            </MudButton>
+                        </MudTd>
+                    </RowTemplate>
+                    <NoRecordsContent>
+                        <div class="sf-empty-state">No inventory items match this filter.</div>
+                    </NoRecordsContent>
+                </MudTable>
+            </div>
+        </MudItem>
+    </MudGrid>
+}
+
+@code {
+    private List<InventoryReportItemDto> _data = new();
+    private string _filter = "all";
+    private bool _loading = false;
+    private readonly string[] _stockChartLabels = ["Healthy", "Low stock", "Out of stock"];
+    private double[] _stockChartData = [0, 0, 0];
+
+    private int OutOfStockCount => _data.Count(x => x.StockStatus == "OutOfStock");
+    private int LowStockCount => _data.Count(x => x.StockStatus == "LowStock");
+    private int HealthyCount => _data.Count(x => x.StockStatus == "Healthy");
+
+    private IEnumerable<InventoryReportItemDto> FilteredItems => _filter switch
+    {
+        "out" => _data.Where(x => x.StockStatus == "OutOfStock"),
+        "low" => _data.Where(x => x.StockStatus == "LowStock"),
+        _ => _data
+    };
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (AuthService.Token != null) ApiService.SetToken(AuthService.Token);
+        await Load();
+    }
+
+    private async Task Load()
+    {
+        _loading = true;
+        var result = await ApiService.GetInventoryReportAsync();
+        _data = result?.Data ?? new();
+        _stockChartData = [HealthyCount, LowStockCount, OutOfStockCount];
+        _loading = false;
+    }
+
+    private Color GetStatusColor(string status) => status switch
+    {
+        "OutOfStock" => Color.Error,
+        "LowStock" => Color.Warning,
+        _ => Color.Success
+    };
+
+    private async Task Restock(InventoryReportItemDto item)
+    {
+        var parameters = new DialogParameters<RestockDialog>
+        {
+            { x => x.ProductName, item.ProductName },
+            { x => x.SKU, item.SKU }
+        };
+
+        var dialog = await DialogService.ShowAsync<RestockDialog>("Restock Product", parameters);
+        var result = await dialog.Result;
+        if (result is { Canceled: false } && result.Data is int quantity && quantity > 0)
+        {
+            var response = await ApiService.AdjustStockAsync(item.ProductId, quantity, "Restock");
+            if (response?.Success == true)
+            {
+                Snackbar.Add("Stock updated.", Severity.Success);
+                await Load();
+            }
+            else
+            {
+                Snackbar.Add(response?.Message ?? "Unable to restock product.", Severity.Error);
+            }
+        }
+    }
+}

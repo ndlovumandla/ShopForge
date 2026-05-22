@@ -1,0 +1,58 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="ShopForge.Mobile.Views.Shop.SearchPage"
+             Title="Search">
+    <Grid RowDefinitions="Auto,Auto,*">
+        <SearchBar Grid.Row="0" Text="{Binding Query}" Placeholder="Search products..." Margin="16,8" />
+
+        <Grid Grid.Row="1" Padding="16,0,16,8" ColumnDefinitions="*,Auto"
+              IsVisible="{Binding RecentSearches.Count, Converter={StaticResource BoolToVisibilityConverter}}">
+            <Label Grid.Column="0" Text="Recent Searches" TextColor="{StaticResource Gray600}" FontSize="12" VerticalOptions="Center" />
+            <Button Grid.Column="1" Text="Clear all" Command="{Binding ClearAllRecentCommand}"
+                    BackgroundColor="Transparent" TextColor="{StaticResource Primary}" FontSize="12" Padding="0" />
+        </Grid>
+
+        <CollectionView Grid.Row="1" ItemsSource="{Binding RecentSearches}"
+                        Margin="16,0,16,8"
+                        IsVisible="{Binding RecentSearches.Count, Converter={StaticResource BoolToVisibilityConverter}}"
+                        SelectionMode="None"
+                        HeightRequest="120">
+            <CollectionView.ItemTemplate>
+                <DataTemplate x:DataType="x:String">
+                    <Grid ColumnDefinitions="*,Auto" Padding="0,2">
+                        <Label Grid.Column="0" Text="{Binding .}" TextColor="{StaticResource Gray700}">
+                            <Label.GestureRecognizers>
+                                <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.SelectRecentCommand}" CommandParameter="{Binding .}" />
+                            </Label.GestureRecognizers>
+                        </Label>
+                        <Button Grid.Column="1" Text="X" FontSize="11" WidthRequest="24" HeightRequest="24" Padding="0"
+                                Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.RemoveRecentCommand}" CommandParameter="{Binding .}"
+                                BackgroundColor="Transparent" TextColor="{StaticResource Gray500}" />
+                    </Grid>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+
+        <CollectionView Grid.Row="2" ItemsSource="{Binding Results}">
+            <CollectionView.ItemTemplate>
+                <DataTemplate>
+                    <Grid Padding="16,8" ColumnDefinitions="Auto,*">
+                        <Image Grid.Column="0" Source="{Binding PrimaryImageUrl}" WidthRequest="60" HeightRequest="60" Aspect="AspectFill" BackgroundColor="{StaticResource Gray200}" />
+                        <VerticalStackLayout Grid.Column="1" Padding="12,0" Spacing="2">
+                            <Label Text="{Binding Name}" FontAttributes="Bold" FontSize="14" />
+                            <Label Text="{Binding CategoryName}" TextColor="{StaticResource Gray600}" FontSize="12" />
+                            <Label Text="{Binding Price, StringFormat='R{0:N2}'}" TextColor="{StaticResource Accent}" FontAttributes="Bold" FontSize="14" />
+                        </VerticalStackLayout>
+                        <Grid.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.NavigateToProductCommand}" CommandParameter="{Binding .}" />
+                        </Grid.GestureRecognizers>
+                    </Grid>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+            <CollectionView.EmptyView>
+                <Label Text="No products found." HorizontalOptions="Center" Margin="40" TextColor="{StaticResource Gray600}" />
+            </CollectionView.EmptyView>
+        </CollectionView>
+    </Grid>
+</ContentPage>

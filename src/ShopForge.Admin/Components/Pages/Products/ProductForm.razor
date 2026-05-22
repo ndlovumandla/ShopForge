@@ -1,0 +1,264 @@
+@page "/products/new"
+@page "/products/{Id:int}/edit"
+@rendermode InteractiveServer
+@inject IAdminApiService ApiService
+@inject IAdminAuthService AuthService
+@inject NavigationManager Nav
+@inject ISnackbar Snackbar
+
+<PageTitle>@(_isEdit ? "Edit Product" : "Add Product")</PageTitle>
+<MudText Typo="Typo.h4" Class="mb-4">@(_isEdit ? "Edit Product" : "Add Product")</MudText>
+
+<MudCard Elevation="2">
+    <MudCardContent>
+        <MudForm @ref="_form">
+            <MudGrid>
+                <MudItem xs="12" md="6">
+                    <MudTextField @bind-Value="_request.Name" Label="Product Name" Required="true" Variant="Variant.Outlined" />
+                </MudItem>
+                <MudItem xs="12" md="6">
+                    <MudTextField @bind-Value="_request.SKU" Label="SKU" Required="true" Variant="Variant.Outlined" />
+                </MudItem>
+                <MudItem xs="12" md="6">
+                    <MudTextField @bind-Value="_request.Slug" Label="Slug" Variant="Variant.Outlined" />
+                </MudItem>
+                <MudItem xs="12" md="6">
+                    <MudSelect @bind-Value="_request.CategoryId" Label="Category" Required="true" Variant="Variant.Outlined" T="int">
+                        @foreach (var cat in _categories)
+                        {
+                            <MudSelectItem Value="@cat.Id">@cat.Name</MudSelectItem>
+                        }
+                    </MudSelect>
+                </MudItem>
+                <MudItem xs="12" md="4">
+                    <MudNumericField @bind-Value="_request.Price" Label="Price" Required="true" Variant="Variant.Outlined" Format="N2" T="decimal" />
+                </MudItem>
+                <MudItem xs="12" md="4">
+                    <MudNumericField @bind-Value="_request.CompareAtPrice" Label="Compare At Price" Variant="Variant.Outlined" Format="N2" T="decimal?" />
+                </MudItem>
+                <MudItem xs="12" md="4">
+                    <MudNumericField @bind-Value="_request.StockQuantity" Label="Stock Quantity" Variant="Variant.Outlined" T="int" />
+                </MudItem>
+                <MudItem xs="12" md="8">
+                    <MudTextField @bind-Value="_request.PrimaryImageUrl"
+                                  Label="Primary Image URL"
+                                  Placeholder="https://example.com/product-image.jpg"
+                                  Variant="Variant.Outlined"
+                                  Adornment="Adornment.Start"
+                                  AdornmentIcon="@Icons.Material.Filled.Image"
+                                  HelperText="Paste a public image URL. This becomes the product card and detail hero image." />
+                    <div class="d-flex align-center gap-3 mt-3">
+                        <MudButton HtmlTag="label"
+                                   Variant="Variant.Outlined"
+                                   Color="Color.Primary"
+                                   StartIcon="@Icons.Material.Filled.Upload"
+                                   Disabled="_uploadingImage">
+                            Browse local image
+                            <InputFile OnChange="UploadPrimaryImage" accept="image/png,image/jpeg,image/webp,image/gif" hidden />
+                        </MudButton>
+                        @if (_uploadingImage)
+                        {
+                            <MudProgressCircular Size="Size.Small" Indeterminate="true" />
+                            <MudText Typo="Typo.caption">Uploading image...</MudText>
+                        }
+                    </div>
+                </MudItem>
+                <MudItem xs="12" md="4">
+                    @if (!string.IsNullOrWhiteSpace(_request.PrimaryImageUrl))
+                    {
+                        <MudPaper Class="pa-2 d-flex align-center justify-center" Outlined="true" Style="height:132px;overflow:hidden;border-radius:14px;">
+                            <img src="@_request.PrimaryImageUrl" alt="@ImageAltText" style="max-width:100%;max-height:116px;object-fit:contain;border-radius:10px;" />
+                        </MudPaper>
+                    }
+                    else
+                    {
+                        <MudPaper Class="pa-4 d-flex flex-column align-center justify-center" Outlined="true" Style="height:132px;border-radius:14px;">
+                            <MudIcon Icon="@Icons.Material.Filled.AddPhotoAlternate" Color="Color.Secondary" />
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">Image preview</MudText>
+                        </MudPaper>
+                    }
+                </MudItem>
+                <MudItem xs="12">
+                    <MudTextField @bind-Value="_request.PrimaryImageAltText"
+                                  Label="Image Alt Text"
+                                  Variant="Variant.Outlined"
+                                  HelperText="Describe the image for accessibility and search." />
+                </MudItem>
+                <MudItem xs="12">
+                    <MudTextField @bind-Value="_request.ShortDescription" Label="Short Description" Lines="2" Variant="Variant.Outlined" />
+                </MudItem>
+                <MudItem xs="12">
+                    <MudTextField @bind-Value="_request.Description" Label="Description" Lines="5" Variant="Variant.Outlined" />
+                </MudItem>
+                <MudItem xs="12" md="6">
+                    <MudSwitch @bind-Value="_request.IsActive" Label="Active" Color="Color.Primary" />
+                </MudItem>
+                <MudItem xs="12" md="6">
+                    <MudSwitch @bind-Value="_request.IsFeatured" Label="Featured" Color="Color.Secondary" />
+                </MudItem>
+            </MudGrid>
+        </MudForm>
+    </MudCardContent>
+    <MudCardActions Class="px-4 pb-4">
+        <MudButton Variant="Variant.Outlined" OnClick='() => Nav.NavigateTo("/products")'>Cancel</MudButton>
+        <MudSpacer />
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="Save" Disabled="_saving">
+            @if (_saving) { <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" /> }
+            @(_isEdit ? "Update" : "Create")
+        </MudButton>
+    </MudCardActions>
+</MudCard>
+
+@code {
+    [Parameter] public int? Id { get; set; }
+    private bool _isEdit => Id.HasValue;
+    private MudForm? _form;
+    private CreateProductRequest _request = new();
+    private List<CategoryDto> _categories = new();
+    private bool _saving = false;
+    private bool _uploadingImage = false;
+    private string ImageAltText => string.IsNullOrWhiteSpace(_request.PrimaryImageAltText)
+        ? _request.Name
+        : _request.PrimaryImageAltText;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (AuthService.Token != null) ApiService.SetToken(AuthService.Token);
+        var cats = await ApiService.GetCategoriesAsync();
+        _categories = cats?.Data ?? new();
+
+        if (_isEdit)
+        {
+            var product = await ApiService.GetProductAsync(Id!.Value);
+            if (product?.Data != null)
+            {
+                var p = product.Data;
+                _request = new CreateProductRequest
+                {
+                    Name = p.Name, Slug = p.Slug, SKU = p.SKU, Description = p.Description,
+                    ShortDescription = p.ShortDescription, Price = p.Price, CompareAtPrice = p.CompareAtPrice,
+                    StockQuantity = p.StockQuantity, CategoryId = p.CategoryId, IsActive = p.IsActive,
+                    IsFeatured = p.IsFeatured, Tags = p.Tags, LowStockThreshold = p.LowStockThreshold,
+                    PrimaryImageUrl = p.PrimaryImageUrl, PrimaryImageAltText = p.Images.FirstOrDefault(i => i.IsPrimary)?.AltText
+                };
+            }
+        }
+    }
+
+    private async Task Save()
+    {
+        if (_form != null)
+        {
+            await _form.Validate();
+            if (!_form.IsValid)
+            {
+                Snackbar.Add("Please complete the required product fields.", Severity.Warning);
+                return;
+            }
+        }
+
+        if (_request.CategoryId <= 0)
+        {
+            Snackbar.Add("Please select a category before saving.", Severity.Warning);
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(_request.Slug))
+        {
+            _request.Slug = CreateSlug(_request.Name);
+        }
+
+        _saving = true;
+        try
+        {
+            ApiResponse<ProductDto>? result;
+            if (_isEdit)
+            {
+                var updateReq = new UpdateProductRequest
+                {
+                    Name = _request.Name, Slug = _request.Slug, SKU = _request.SKU,
+                    Description = _request.Description, ShortDescription = _request.ShortDescription,
+                    Price = _request.Price, CompareAtPrice = _request.CompareAtPrice,
+                    StockQuantity = _request.StockQuantity, CategoryId = _request.CategoryId,
+                    IsActive = _request.IsActive, IsFeatured = _request.IsFeatured,
+                    Tags = _request.Tags, LowStockThreshold = _request.LowStockThreshold,
+                    PrimaryImageUrl = _request.PrimaryImageUrl,
+                    PrimaryImageAltText = _request.PrimaryImageAltText
+                };
+                result = await ApiService.UpdateProductAsync(Id!.Value, updateReq);
+            }
+            else
+            {
+                result = await ApiService.CreateProductAsync(_request);
+            }
+
+            if (result?.Success == true)
+            {
+                Snackbar.Add(_isEdit ? "Product updated" : "Product created", Severity.Success);
+                Nav.NavigateTo("/products");
+            }
+            else
+            {
+                Snackbar.Add(result?.Message ?? "Save failed", Severity.Error);
+            }
+        }
+        finally
+        {
+            _saving = false;
+        }
+    }
+
+    private async Task UploadPrimaryImage(InputFileChangeEventArgs args)
+    {
+        var file = args.File;
+        if (file == null)
+            return;
+
+        if (AuthService.Token != null)
+            ApiService.SetToken(AuthService.Token);
+
+        _uploadingImage = true;
+        try
+        {
+            var result = await ApiService.UploadProductImageAsync(file);
+            if (result?.Success == true && result.Data != null)
+            {
+                _request.PrimaryImageUrl = result.Data.ImageUrl;
+                if (string.IsNullOrWhiteSpace(_request.PrimaryImageAltText))
+                    _request.PrimaryImageAltText = string.IsNullOrWhiteSpace(_request.Name)
+                        ? Path.GetFileNameWithoutExtension(file.Name)
+                        : _request.Name;
+
+                Snackbar.Add("Image uploaded and attached to product.", Severity.Success);
+            }
+            else
+            {
+                Snackbar.Add(result?.Message ?? "Image upload failed.", Severity.Error);
+            }
+        }
+        catch (IOException)
+        {
+            Snackbar.Add("Image must be 5 MB or smaller.", Severity.Error);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Image upload failed: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _uploadingImage = false;
+        }
+    }
+
+    private static string CreateSlug(string value)
+    {
+        var slug = new string(value.Trim().ToLowerInvariant()
+            .Select(ch => char.IsLetterOrDigit(ch) ? ch : '-')
+            .ToArray());
+
+        while (slug.Contains("--"))
+            slug = slug.Replace("--", "-");
+
+        return slug.Trim('-');
+    }
+}

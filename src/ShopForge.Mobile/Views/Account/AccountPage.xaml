@@ -1,0 +1,77 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="ShopForge.Mobile.Views.Account.AccountPage"
+             Title="Account">
+    <ScrollView>
+        <VerticalStackLayout Spacing="0">
+            <!-- Profile Header -->
+            <Grid BackgroundColor="{StaticResource Primary}" Padding="24,32,24,24" ColumnDefinitions="Auto,*">
+                <Border Grid.Column="0" Padding="0" HeightRequest="72" WidthRequest="72"
+                        BackgroundColor="{StaticResource Accent}" StrokeThickness="0">
+                    <Border.StrokeShape>
+                        <RoundRectangle CornerRadius="36" />
+                    </Border.StrokeShape>
+                    <Label Text="{Binding Initials}" FontSize="24" FontAttributes="Bold" TextColor="White"
+                           HorizontalOptions="Center" VerticalOptions="Center" />
+                </Border>
+                <VerticalStackLayout Grid.Column="1" Padding="16,0" VerticalOptions="Center">
+                    <Label Text="{Binding Profile.FirstName}" TextColor="White" FontSize="20" FontAttributes="Bold" />
+                    <Label Text="{Binding Profile.Email}" TextColor="#CCDDFF" FontSize="13" />
+                </VerticalStackLayout>
+            </Grid>
+
+            <!-- Menu Items -->
+            <VerticalStackLayout Padding="0,8" Spacing="0">
+                <Border Margin="16,4" Padding="16" BackgroundColor="White" StrokeThickness="0">
+                    <Border.StrokeShape>
+                        <RoundRectangle CornerRadius="8" />
+                    </Border.StrokeShape>
+                    <Label Text="Edit Profile" FontSize="15" />
+                    <Border.GestureRecognizers>
+                        <TapGestureRecognizer Command="{Binding EditProfileCommand}" />
+                    </Border.GestureRecognizers>
+                </Border>
+                <Border Margin="16,4" Padding="16" BackgroundColor="White" StrokeThickness="0">
+                    <Border.StrokeShape>
+                        <RoundRectangle CornerRadius="8" />
+                    </Border.StrokeShape>
+                    <Label Text="My Addresses" FontSize="15" />
+                    <Border.GestureRecognizers>
+                        <TapGestureRecognizer Command="{Binding ManageAddressesCommand}" />
+                    </Border.GestureRecognizers>
+                </Border>
+                <Border Margin="16,4" Padding="16" BackgroundColor="White" StrokeThickness="0">
+                    <Border.StrokeShape>
+                        <RoundRectangle CornerRadius="8" />
+                    </Border.StrokeShape>
+                    <Label Text="Change Password" FontSize="15" />
+                    <Border.GestureRecognizers>
+                        <TapGestureRecognizer Command="{Binding ChangePasswordCommand}" />
+                    </Border.GestureRecognizers>
+                </Border>
+                <Border Margin="16,4" Padding="16" BackgroundColor="White" StrokeThickness="0">
+                    <Border.StrokeShape>
+                        <RoundRectangle CornerRadius="8" />
+                    </Border.StrokeShape>
+                    <Label Text="Notifications" FontSize="15" />
+                    <Border.GestureRecognizers>
+                        <TapGestureRecognizer Command="{Binding NotificationsCommand}" />
+                    </Border.GestureRecognizers>
+                </Border>
+                <Border Margin="16,4" Padding="16" BackgroundColor="White" StrokeThickness="0">
+                    <Border.StrokeShape>
+                        <RoundRectangle CornerRadius="8" />
+                    </Border.StrokeShape>
+                    <Label Text="Logout" FontSize="15" TextColor="{StaticResource Error}" />
+                    <Border.GestureRecognizers>
+                        <TapGestureRecognizer Command="{Binding LogoutCommand}" />
+                    </Border.GestureRecognizers>
+                </Border>
+            </VerticalStackLayout>
+
+            <ActivityIndicator IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}"
+                               Color="{StaticResource Primary}" HorizontalOptions="Center" Margin="20" />
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

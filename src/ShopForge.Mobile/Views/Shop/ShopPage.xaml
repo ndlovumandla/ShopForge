@@ -1,0 +1,57 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="ShopForge.Mobile.Views.Shop.ShopPage"
+             Title="Shop">
+    <Grid RowDefinitions="Auto,*">
+        <!-- Search Bar -->
+        <Grid Grid.Row="0" Padding="16,12" BackgroundColor="{StaticResource Primary}" ColumnDefinitions="*,Auto">
+            <SearchBar Grid.Column="0" Text="{Binding SearchText}" Placeholder="Search products..."
+                       BackgroundColor="White" TextColor="{StaticResource Gray900}" />
+            <Button Grid.Column="1" Text="&#x1F50D;" Command="{Binding LoadProductsCommand}"
+                    BackgroundColor="Transparent" TextColor="White" />
+        </Grid>
+
+        <!-- Products Grid -->
+        <CollectionView Grid.Row="1" ItemsSource="{Binding Products}"
+                        RemainingItemsThreshold="4"
+                        RemainingItemsThresholdReachedCommand="{Binding LoadMoreCommand}">
+            <CollectionView.ItemsLayout>
+                <GridItemsLayout Orientation="Vertical" Span="2" HorizontalItemSpacing="4" VerticalItemSpacing="4" />
+            </CollectionView.ItemsLayout>
+            <CollectionView.Header>
+                <ActivityIndicator IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}"
+                                   Color="{StaticResource Primary}" HorizontalOptions="Center" Margin="12" />
+            </CollectionView.Header>
+            <CollectionView.ItemTemplate>
+                <DataTemplate>
+                    <Grid Padding="4">
+                        <Frame BackgroundColor="White" CornerRadius="12" Padding="0" HasShadow="True">
+                            <VerticalStackLayout>
+                                <Image Source="{Binding PrimaryImageUrl}" Aspect="AspectFill" HeightRequest="140" BackgroundColor="{StaticResource Gray200}" />
+                                <VerticalStackLayout Padding="8" Spacing="3">
+                                    <Label Text="{Binding Name}" MaxLines="2" LineBreakMode="TailTruncation" FontAttributes="Bold" FontSize="12" />
+                                    <Label Text="{Binding CategoryName}" TextColor="{StaticResource Gray600}" FontSize="10" />
+                                    <Label Text="{Binding Price, StringFormat='R{0:N2}'}" TextColor="{StaticResource Accent}" FontAttributes="Bold" FontSize="14" />
+                                    <Button Text="Add to Cart" Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.AddToCartCommand}" CommandParameter="{Binding .}"
+                                            Style="{StaticResource AccentButton}" FontSize="11" HeightRequest="34" Padding="4,0" />
+                                </VerticalStackLayout>
+                            </VerticalStackLayout>
+                        </Frame>
+                        <Grid.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.NavigateToProductCommand}" CommandParameter="{Binding .}" />
+                        </Grid.GestureRecognizers>
+                    </Grid>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+            <CollectionView.Footer>
+                <ActivityIndicator IsRunning="{Binding IsLoadingMore}" IsVisible="{Binding IsLoadingMore}"
+                                   Color="{StaticResource Primary}" HorizontalOptions="Center" Margin="12" />
+            </CollectionView.Footer>
+            <CollectionView.EmptyView>
+                <Label Text="No products found." HorizontalOptions="Center" Margin="40"
+                       TextColor="{StaticResource Gray600}" />
+            </CollectionView.EmptyView>
+        </CollectionView>
+    </Grid>
+</ContentPage>
